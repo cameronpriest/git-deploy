@@ -51,6 +51,9 @@ added_files = changes_hash['A'] # added
 deleted_files = changes_hash['D'] # deleted
 changed_files = modified_files + deleted_files # all
 puts "files changed: #{changed_files.size}"
+changed_files.each do |file|
+  puts " #{file}"
+end
 
 cached_assets_cleared = false
 
@@ -68,7 +71,8 @@ end
 
 if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock')
   # update bundled gems if manifest file has changed
-  system %(umask 002 && bundle install --deployment)
+  puts "Updating bundle..."
+  puts system %(umask 002 && bundle install --deployment --without development test)
 end
 
 # run migrations when new ones added
