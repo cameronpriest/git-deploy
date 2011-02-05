@@ -54,4 +54,5 @@ else
   File.open(logfile, 'a') { |log| log.puts "==== #{Time.now} ====" }
   # start the post-reset hook in background
   system %(nohup .git/hooks/post-reset #{oldrev} #{newrev} 1>>#{logfile} 2>>#{logfile} &)
+  puts "hello"
 end
