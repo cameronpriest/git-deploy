@@ -72,7 +72,7 @@ end
 if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock')
   # update bundled gems if manifest file has changed
   puts "Updating bundle..."
-  puts system %(umask 002 && rvm 1.8.7@base exec bash -c 'echo Using gems at $GEM_HOME')
+  puts system %(umask 002 && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME')
   puts system %(umask 002 && rvm 1.8.7@base exec bundle install --deployment --without development test)
 end
 
@@ -109,7 +109,7 @@ end
 system %(umask 002 && git submodule update)
 
 # clean unversioned files from vendor (e.g. old submodules)
-system %(git clean -d -f vendor)
+# system %(git clean -d -f vendor) # I don't think this is necessary as passenger looks for gems in vendor/bundle - Call me crazy
 
 # determine if app restart is needed
 if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
