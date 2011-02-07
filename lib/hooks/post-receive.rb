@@ -53,5 +53,8 @@ else
   # log timestamp
   File.open(logfile, 'a') { |log| log.puts "==== #{Time.now} ====" }
   # start the post-reset hook in background
-  `nohup .git/hooks/post-reset #{oldrev} #{newrev} | tee #{logfile} &`
+  puts "     "
+  puts "---> Cloudbot (#{`hostname`}) received push"
+  puts "     "
+  puts "---> "+`nohup .git/hooks/post-reset #{oldrev} #{newrev} | tee #{logfile} &`
 end
