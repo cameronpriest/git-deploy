@@ -72,8 +72,8 @@ end
 if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock')
   # update bundled gems if manifest file has changed
   puts "Updating bundle..."
-  puts system %(umask 002 && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME')
-  puts system %(umask 002 && rvm 1.8.7@base exec bundle install --deployment --without development test)
+  puts `umask 002 && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+  puts `umask 002 && rvm 1.8.7@base exec bundle install --deployment --without development test`
 end
 
 # run migrations when new ones added
@@ -113,7 +113,7 @@ system %(umask 002 && git submodule update)
 
 # determine if app restart is needed
 if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
-    changed_files.any_in_dir?(%w(app config lib public vendor))
+    changed_files.any_in_dir?(%w(app config lib public vendor)) or changed_files.include?('Gemfile') or changed_files.include?('Gemfile.lock')
   require 'fileutils'
   # tell Passenger to restart this app
   FileUtils.touch 'tmp/restart.txt'
