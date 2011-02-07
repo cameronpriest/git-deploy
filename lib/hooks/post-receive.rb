@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+$stdout.sync = true
+
 if ENV['GIT_DIR'] == '.'
   # this means the script has been called as a hook, not manually.
   # get the proper GIT_DIR so we can descend into the working copy dir;
