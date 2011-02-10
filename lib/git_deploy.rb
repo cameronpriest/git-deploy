@@ -91,8 +91,8 @@ Capistrano::Configuration.instance(true).load do
       dir = File.dirname(__FILE__) + '/hooks'
       remote_dir = "#{deploy_to}/.git/hooks"
 
-      top.upload "#{dir}/post-receive.rb", "#{remote_dir}/post-receive"
-      top.upload "#{dir}/post-reset.rb", "#{remote_dir}/post-reset"
+      top.upload "#{dir}/pre-receive.rb", "#{remote_dir}/pre-receive"
+      # top.upload "#{dir}/post-reset.rb", "#{remote_dir}/post-reset"
       run "chmod +x #{remote_dir}/post-receive #{remote_dir}/post-reset"
     end
 
