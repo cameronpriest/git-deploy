@@ -50,10 +50,10 @@ Capistrano::Configuration.instance(true).load do
         push
       else
         code
-        command = ["cd #{deploy_to}"]
-        command << ".git/hooks/post-reset `cat .git/ORIG_HEAD` HEAD 2>&1 | tee -a log/deploy.log"
+        # command = ["cd #{deploy_to}"]
+        # command << ".git/hooks/pre-receive `cat .git/ORIG_HEAD` HEAD 2>&1 | tee -a log/deploy.log"
         
-        run command.join(' && ')
+        # run command.join(' && ')
       end
     end
 
@@ -93,7 +93,7 @@ Capistrano::Configuration.instance(true).load do
 
       top.upload "#{dir}/pre-receive.rb", "#{remote_dir}/pre-receive"
       # top.upload "#{dir}/post-reset.rb", "#{remote_dir}/post-reset"
-      run "chmod +x #{remote_dir}/post-receive #{remote_dir}/post-reset"
+      run "chmod +x #{remote_dir}/pre-receive"
     end
 
     desc "Restarts your Passenger application."
