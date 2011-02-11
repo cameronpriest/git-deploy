@@ -2,7 +2,8 @@
 begin
   
   require 'logger'
-
+  require 'fileutils'
+  
   if ENV['GIT_DIR'] == '.'
     # this means the script has been called as a hook, not manually.
     # get the proper GIT_DIR so we can descend into the working copy dir;
@@ -14,6 +15,8 @@ begin
   cmd = %(bash -c "[ -f /etc/profile ] && source /etc/profile; echo $PATH")
   envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
   ENV['PATH'] = envpath
+  
+  FileUtils.mkdir_p(['log','tmp'])
 
   @log = Logger.new('log/deploy.log', 10, 1024000)
   # $stdout.sync = true
@@ -179,7 +182,6 @@ begin
     # determine if app restart is needed
     if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
       changed_files.any_in_dir?(%w(app config lib public vendor)) or changed_files.include?('Gemfile') or changed_files.include?('Gemfile.lock')
-      require 'fileutils'
       # tell Passenger to restart this app
       FileUtils.touch 'tmp/restart.txt'
       log "restarting Passenger app"
