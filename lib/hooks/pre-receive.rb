@@ -76,7 +76,8 @@ begin
   exit if newrev.nil? or newrev == null_ref
 
   # update the working copy
-  `umask 002 && git reset --hard`
+  # `umask 002 && git reset --hard`
+  `umask 002 && git checkout HEAD -f`
 
   config = 'config/database.yml'
   logfile = 'log/deploy.log'
