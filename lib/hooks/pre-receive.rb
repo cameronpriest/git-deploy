@@ -78,8 +78,8 @@ begin
   log "checking out (#{oldrev} -> #{newrev})"
   
   # update the working copy
-  # `umask 002 && git reset --hard`
-  `umask 002 && git checkout HEAD -f`
+  `umask 002 && git reset --hard #{newrev}`
+  # `umask 002 && git checkout HEAD -f`
 
   config = 'config/database.yml'
   logfile = 'log/deploy.log'
