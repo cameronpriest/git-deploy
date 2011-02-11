@@ -74,7 +74,9 @@ begin
 
   # abort if there's no update, or in case the branch is deleted
   exit if newrev.nil? or newrev == null_ref
-
+  
+  log "checking out (#{oldrev} -> #{newrev})"
+  
   # update the working copy
   # `umask 002 && git reset --hard`
   `umask 002 && git checkout HEAD -f`
