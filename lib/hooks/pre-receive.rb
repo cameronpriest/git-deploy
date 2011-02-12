@@ -16,9 +16,12 @@ begin
   envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
   ENV['PATH'] = envpath
   
-  FileUtils.mkdir_p(['log','tmp'])
-
-  @log = Logger.new('log/deploy.log', 10, 1024000)
+  app_name = Dir.pwd.split("/").pop
+  @repo_dir = @repository_directory = "/var/repos/" + app_name
+  @app_dir = @application_directory = "/var/apps/"  + app_name
+  FileUtils.mkdir_p(["/var/apps/#{app_name}/log","/var/apps/#{app_name}/tmp"])
+  @log = Logger.new("/var/apps/#{app_name}/log/deploy.log", 10, 1024000)
+  
   # $stdout.sync = true
   
   def parse_configuration(file)
@@ -78,7 +81,9 @@ begin
   log "checking out (#{oldrev} -> #{newrev})"
   
   # update the working copy
-  `umask 002 && git reset --hard #{newrev}`
+  # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`
+  `git archive #{newrev} * | tar -x -C #{@app_dir}`
+  # `umask 002 && git reset --hard #{newrev}`
   # `umask 002 && git checkout HEAD -f`
 
   config = 'config/database.yml'
@@ -144,15 +149,15 @@ begin
     if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock')
       # update bundled gems if manifest file has changed
       log "Updating bundle..."
-      log `umask 002 && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
       log "\n"
-      log `umask 002 && rvm 1.8.7@base exec bundle install --deployment --without development test`
-      raise "Bundle installation failed!" unless `umask 002 && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
+      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
+      raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
     end
 
     # run migrations when new ones added
     if new_migrations = added_files.any_in_dir?('db/migrate')
-      system %(umask 002 && rake db:migrate RAILS_ENV=#{RAILS_ENV})
+      system %(umask 002 && cd #{@app_dir} && rake db:migrate RAILS_ENV=#{RAILS_ENV})
     end
 
     if modified_files.include?('.gitmodules')
