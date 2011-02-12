@@ -195,6 +195,10 @@ begin
       log "restarting Passenger app"
     end
   end
+  STDERR.puts ""
+  STDERR.puts "---> Don't forget to push your code to github as well!"
+  STDERR.puts ""
+  `~/.notifications/deploy_success.rb #{app_name}` if File.exists? "~/.notifications/deploy_success.rb"
 rescue Exception => e
   pre = "!!!! "
   STDERR.puts ""
@@ -202,5 +206,6 @@ rescue Exception => e
   STDERR.puts pre+"Reverting application to previous working state"
   # tell Passenger to restart this app
   FileUtils.touch "#{@app_dir}/tmp/restart.txt"
+  `~/.notifications/deploy_fail.rb #{app_name}` if File.exists? "~/.notifications/deploy_fail.rb"
   exit 1
 end
