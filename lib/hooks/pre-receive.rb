@@ -200,8 +200,7 @@ rescue Exception => e
   STDERR.puts ""
   STDERR.puts pre+e.to_s
   STDERR.puts pre+"Reverting application to previous working state"
-  require 'fileutils'
   # tell Passenger to restart this app
-  FileUtils.touch 'tmp/restart.txt'
+  FileUtils.touch "#{@app_dir}/tmp/restart.txt"
   exit 1
 end
