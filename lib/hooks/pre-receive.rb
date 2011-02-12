@@ -55,9 +55,10 @@ begin
     end
   end
 
-  def log(message)
-    STDERR.puts message
-    @log.info(message)
+  def log(message,where = :all)
+    STDERR.puts message if where == :stderr || where == :all
+    STDOUT.puts message if where == :stdout # redundant to use all
+    @log.info(message)  if where == :file || where == :all
   end
   
   # find out the current branch
@@ -192,13 +193,14 @@ begin
       changed_files.any_in_dir?(%w(app config lib public vendor)) or changed_files.include?('Gemfile') or changed_files.include?('Gemfile.lock')
       # tell Passenger to restart this app
       FileUtils.touch 'tmp/restart.txt'
-      log "restarting Passenger app"
+      log "", :stderr
+      log ":-)  restarting Passenger app"
     end
   end
-  STDERR.puts ""
-  STDERR.puts "---> Don't forget to push your code to github as well!"
-  STDERR.puts ""
-  `~/.notifications/deploy_success.rb #{app_name}` if File.exists? "~/.notifications/deploy_success.rb"
+  log "", :stderr
+  log "---> Don't forget to push your code to github as well!", :stderr
+  log "", :stderr
+  `/var/repos/.notifications/deploy_success.rb '#{app_name}'` if File.exists? "/var/repos/.notifications/deploy_success.rb"
 rescue Exception => e
   pre = "!!!! "
   STDERR.puts ""
@@ -206,6 +208,6 @@ rescue Exception => e
   STDERR.puts pre+"Reverting application to previous working state"
   # tell Passenger to restart this app
   FileUtils.touch "#{@app_dir}/tmp/restart.txt"
-  `~/.notifications/deploy_fail.rb #{app_name}` if File.exists? "~/.notifications/deploy_fail.rb"
+  `/var/repos/.notifications/deploy_fail.rb '#{app_name}' '#{e.to_s}'` if File.exists? "/var/repos/.notifications/deploy_fail.rb"
   exit 1
 end
