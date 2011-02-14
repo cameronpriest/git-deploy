@@ -43,6 +43,26 @@ module GitDeploy::Command
       log "log success"
       
       puts "OK"
+      
+      head = `git symbolic-ref HEAD`.chomp
+      # abort if we're on a detached head
+      exit unless $?.success?
+
+      oldrev = newrev = nil
+      null_ref = '0' * 40
+
+      # read the STDIN to detect if this push changed the current branch
+      while newrev.nil? and gets
+        # each line of input is in form of "<oldrev> <newrev> <refname>"
+        revs = $_.split
+        oldrev, newrev = revs if head == revs.pop
+      end
+
+      # abort if there's no update, or in case the branch is deleted
+      exit if newrev.nil? or newrev == null_ref
+
+      log "checking out (#{oldrev} -> #{newrev})"
+      
     end
     def receive
       begin
