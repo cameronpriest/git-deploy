@@ -63,6 +63,8 @@ module GitDeploy::Command
           STDERR.puts message if where == :stderr || where == :all
           STDOUT.puts message if where == :stdout # redundant to use all
           @log.info(message)  if where == :file || where == :all
+          $stdout.sync = true
+          $stderr.sync = true
         end
 
         # find out the current branch
