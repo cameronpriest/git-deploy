@@ -17,13 +17,14 @@ end
 module GitDeploy::Command
   class Deploy < Base
     def log(message,where = :all)
-      puts "LOG"
+      @log ||= Logger.new("#{app_basedir}#{app_name}/log/deploy.log", 10, 1024000)
+      STDERR.puts message if where == :stderr || where == :all
+      STDOUT.puts message if where == :stdout # redundant to use all
+      @log.info(message)  if where == :file || where == :all
+      STDOUT.flush
+      STDERR.flush
     end
-    
-    def self.log(message,where = :all)
-      puts "SELF.LOG"
-    end
-    
+        
     def test
       if ENV['GIT_DIR'] == '.'
         # this means the script has been called as a hook, not manually.
@@ -67,7 +68,7 @@ module GitDeploy::Command
         @repo_dir = @repository_directory = "/var/repos/" + app_name
         @app_dir = @application_directory = app_basedir  + app_name
         FileUtils.mkdir_p(["#{app_basedir}#{app_name}/log","/var/apps/#{app_name}/tmp"])
-        @log = Logger.new("#{app_basedir}#{app_name}/log/deploy.log", 10, 1024000)
+        
 
         # $stdout.sync = true
 
@@ -246,16 +247,7 @@ module GitDeploy::Command
         end
 
         config
-      end
-
-      # def log(message,where = :all)
-      #   STDERR.puts message if where == :stderr || where == :all
-      #   STDOUT.puts message if where == :stdout # redundant to use all
-      #   @log.info(message)  if where == :file || where == :all
-      #   STDOUT.flush
-      #   STDERR.flush
-      # end
-      
+      end      
     end
   end
 end
