@@ -35,6 +35,8 @@ module GitDeploy::Command
       
       puts app_name
       
+      log "log success"
+      
       puts "OK"
     end
     def receive
