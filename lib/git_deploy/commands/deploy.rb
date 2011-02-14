@@ -1,6 +1,19 @@
 require 'logger'
 require 'fileutils'
 
+class Array
+  # scans the list of files to see if any of them are under the given path
+  def any_in_dir?(dir)
+    if Array === dir
+      exp = %r{^(?:#{dir.join('|')})/}
+      any? { |file| file =~ exp }
+    else
+      dir += '/'
+      any? { |file| file.index(dir) == 0 }
+    end
+  end
+end
+
 module GitDeploy::Command
   class Deploy < Base
     def receive
@@ -44,18 +57,6 @@ module GitDeploy::Command
           end
 
           config
-        end
-        class Array
-          # scans the list of files to see if any of them are under the given path
-          def any_in_dir?(dir)
-            if Array === dir
-              exp = %r{^(?:#{dir.join('|')})/}
-              any? { |file| file =~ exp }
-            else
-              dir += '/'
-              any? { |file| file.index(dir) == 0 }
-            end
-          end
         end
 
         def log(message,where = :all)
