@@ -17,6 +17,24 @@ end
 module GitDeploy::Command
   class Deploy < Base
     def test
+      if ENV['GIT_DIR'] == '.'
+        # this means the script has been called as a hook, not manually.
+        # get the proper GIT_DIR so we can descend into the working copy dir;
+        # if we don't then `git reset --hard` doesn't affect the working tree.
+        Dir.chdir('..')
+        ENV['GIT_DIR'] = '.git'
+      end
+
+      cmd = %(bash -c "[ -f /etc/profile ] && source /etc/profile; echo $PATH")
+      envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
+      ENV['PATH'] = envpath
+
+      app_basedir = "/var/apps/"
+
+      app_name = Dir.pwd.split("/").pop
+      
+      puts app_name
+      
       puts "OK"
     end
     def receive
