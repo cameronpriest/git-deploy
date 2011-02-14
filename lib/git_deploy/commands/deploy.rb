@@ -16,6 +16,14 @@ end
 
 module GitDeploy::Command
   class Deploy < Base
+    def log(message,where = :all)
+      puts "LOG"
+    end
+    
+    def self.log(message,where = :all)
+      puts "SELF.LOG"
+    end
+    
     def test
       if ENV['GIT_DIR'] == '.'
         # this means the script has been called as a hook, not manually.
@@ -240,13 +248,13 @@ module GitDeploy::Command
         config
       end
 
-      def log(message,where = :all)
-        STDERR.puts message if where == :stderr || where == :all
-        STDOUT.puts message if where == :stdout # redundant to use all
-        @log.info(message)  if where == :file || where == :all
-        STDOUT.flush
-        STDERR.flush
-      end
+      # def log(message,where = :all)
+      #   STDERR.puts message if where == :stderr || where == :all
+      #   STDOUT.puts message if where == :stdout # redundant to use all
+      #   @log.info(message)  if where == :file || where == :all
+      #   STDOUT.flush
+      #   STDERR.flush
+      # end
       
     end
   end
