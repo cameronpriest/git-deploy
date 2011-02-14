@@ -1,5 +1,6 @@
 module GitDeploy; end
 
+begin
 require 'capistrano/recipes/deploy/scm/git'
 
 Capistrano::Configuration.instance(true).load do
@@ -120,4 +121,7 @@ Capistrano::Configuration.instance(true).load do
       files.each { |file| top.upload(file, File.join(deploy_to, file)) }
     end
   end
+end
+rescue LoadError, NameError
+  # Ignore problems if Capistrano is not loaded (for binary)
 end
