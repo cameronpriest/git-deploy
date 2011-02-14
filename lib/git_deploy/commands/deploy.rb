@@ -17,7 +17,7 @@ end
 module GitDeploy::Command
   class Deploy < Base
     def log(message,where = :all)
-      @log ||= Logger.new("#{app_basedir}#{app_name}/log/deploy.log", 10, 1024000)
+      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
       STDERR.puts message if where == :stderr || where == :all
       STDOUT.puts message if where == :stdout # redundant to use all
       @log.info(message)  if where == :file || where == :all
@@ -38,11 +38,11 @@ module GitDeploy::Command
       envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
       ENV['PATH'] = envpath
 
-      app_basedir = "/var/apps/"
+      @app_dir = "/var/apps/"
 
-      app_name = Dir.pwd.split("/").pop
+      @app_name = Dir.pwd.split("/").pop
       
-      puts app_name
+      puts @app_name
       
       log "log success"
       
@@ -62,12 +62,7 @@ module GitDeploy::Command
         envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
         ENV['PATH'] = envpath
 
-        app_basedir = "/var/apps/"
-
-        app_name = Dir.pwd.split("/").pop
-        @repo_dir = @repository_directory = "/var/repos/" + app_name
-        @app_dir = @application_directory = app_basedir  + app_name
-        FileUtils.mkdir_p(["#{app_basedir}#{app_name}/log","/var/apps/#{app_name}/tmp"])
+        FileUtils.mkdir_p(["#{@app_dir}#{@app_name}/log","/var/apps/#{@app_name}/tmp"])
         
 
         # $stdout.sync = true
@@ -200,11 +195,11 @@ module GitDeploy::Command
           system %(umask 002 && git submodule update)
 
           # Set application permissions
-          system %(chown -R root:nobody #{app_basedir})
-          system %(chmod -R 0755 #{app_basedir})
+          system %(chown -R root:nobody #{@app_dir})
+          system %(chmod -R 0755 #{@app_dir})
 
           # Set log and tmp directory permissions
-          system %(find #{app_basedir}* -name log -o -name tmp | xargs chmod -R 0777)
+          system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
 
           # determine if app restart is needed
           if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
@@ -218,7 +213,7 @@ module GitDeploy::Command
         log "", :stderr
         log "---> Don't forget to push your code to github as well!", :stderr
         log "", :stderr
-        `/var/repos/.notifications/deploy_success.rb '#{app_name}'` if File.exists? "/var/repos/.notifications/deploy_success.rb"
+        `/var/repos/.notifications/deploy_success.rb '#{@app_name}'` if File.exists? "/var/repos/.notifications/deploy_success.rb"
       rescue Exception => e
         pre = "!!!! "
         STDERR.puts ""
@@ -226,7 +221,7 @@ module GitDeploy::Command
         STDERR.puts pre+"Reverting application to previous working state"
         # tell Passenger to restart this app
         FileUtils.touch "#{@app_dir}/tmp/restart.txt"
-        `/var/repos/.notifications/deploy_fail.rb '#{app_name}' '#{e.to_s}'` if File.exists? "/var/repos/.notifications/deploy_fail.rb"
+        `/var/repos/.notifications/deploy_fail.rb '#{@app_name}' '#{e.to_s}'` if File.exists? "/var/repos/.notifications/deploy_fail.rb"
         exit 1
       end
       
