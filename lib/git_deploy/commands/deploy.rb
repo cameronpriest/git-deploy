@@ -40,33 +40,6 @@ module GitDeploy::Command
 
         # $stdout.sync = true
 
-        def parse_configuration(file)
-          config = {}
-          current = nil
-
-          File.open(file).each_line do |line|
-            case line
-            when /^\[(\w+)(?: "(.+)")\]/
-              key, subkey = $1, $2
-              current = (config[key] ||= {})
-              current = (current[subkey] ||= {}) if subkey
-            else
-              key, value = line.strip.split(' = ')
-              current[key] = value
-            end
-          end
-
-          config
-        end
-
-        def log(message,where = :all)
-          STDERR.puts message if where == :stderr || where == :all
-          STDOUT.puts message if where == :stdout # redundant to use all
-          @log.info(message)  if where == :file || where == :all
-          $stdout.sync = true
-          $stderr.sync = true
-        end
-
         # find out the current branch
         head = `git symbolic-ref HEAD`.chomp
         # abort if we're on a detached head
@@ -224,6 +197,34 @@ module GitDeploy::Command
         `/var/repos/.notifications/deploy_fail.rb '#{app_name}' '#{e.to_s}'` if File.exists? "/var/repos/.notifications/deploy_fail.rb"
         exit 1
       end
+      
+      def parse_configuration(file)
+        config = {}
+        current = nil
+
+        File.open(file).each_line do |line|
+          case line
+          when /^\[(\w+)(?: "(.+)")\]/
+            key, subkey = $1, $2
+            current = (config[key] ||= {})
+            current = (current[subkey] ||= {}) if subkey
+          else
+            key, value = line.strip.split(' = ')
+            current[key] = value
+          end
+        end
+
+        config
+      end
+
+      def log(message,where = :all)
+        STDERR.puts message if where == :stderr || where == :all
+        STDOUT.puts message if where == :stdout # redundant to use all
+        @log.info(message)  if where == :file || where == :all
+        STDOUT.flush
+        STDERR.flush
+      end
+      
     end
   end
 end
