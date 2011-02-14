@@ -1,16 +1,16 @@
 Gem::Specification.new do |gem|
   gem.name    = 'git-deploy'
-  gem.version = '0.4.1'
+  gem.version = '0.4.2'
   gem.date    = Date.today.to_s
   
   gem.add_dependency 'capistrano', '~> 2.5.9'
   
   gem.summary = "Simple git push-based application deployment"
   gem.description = "A tool to install useful git hooks on your remote repository to enable push-based, Heroku-like deployment on your host."
-  
-  gem.authors  = ['Mislav Marohnić']
-  gem.email    = 'mislav.marohnic@gmail.com'
-  gem.homepage = 'http://github.com/mislav/git-deploy'
+  gem.executables = "git-deploy"
+  gem.authors  = ['Mislav Marohnić','Blaine Schanfeldt']
+  gem.email    = 'bschanfeldt@gmail.com'
+  gem.homepage = 'http://github.com/blaines/git-deploy'
   
   gem.rubyforge_project = nil
   gem.has_rdoc = false

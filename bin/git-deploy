@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+lib = File.expand_path(File.dirname(__FILE__) + '/../lib')
+$LOAD_PATH.unshift(lib) if File.directory?(lib) && !$LOAD_PATH.include?(lib)
+
+puts __FILE__
+
+# require 'git_deploy'
+require 'git_deploy/command'
+
+args = ARGV.dup
+ARGV.clear
+command = args.shift.strip rescue 'help'
+
+GitDeploy::Command.run(command, args)

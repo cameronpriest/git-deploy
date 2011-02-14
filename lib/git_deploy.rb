@@ -1,3 +1,5 @@
+module GitDeploy; end
+
 require 'capistrano/recipes/deploy/scm/git'
 
 Capistrano::Configuration.instance(true).load do

@@ -16,11 +16,13 @@ begin
   envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
   ENV['PATH'] = envpath
   
+  app_basedir = "/var/apps/"
+  
   app_name = Dir.pwd.split("/").pop
   @repo_dir = @repository_directory = "/var/repos/" + app_name
-  @app_dir = @application_directory = "/var/apps/"  + app_name
-  FileUtils.mkdir_p(["/var/apps/#{app_name}/log","/var/apps/#{app_name}/tmp"])
-  @log = Logger.new("/var/apps/#{app_name}/log/deploy.log", 10, 1024000)
+  @app_dir = @application_directory = app_basedir  + app_name
+  FileUtils.mkdir_p(["#{app_basedir}#{app_name}/log","/var/apps/#{app_name}/tmp"])
+  @log = Logger.new("#{app_basedir}#{app_name}/log/deploy.log", 10, 1024000)
   
   # $stdout.sync = true
   
@@ -187,6 +189,13 @@ begin
     end
     # update existing submodules
     system %(umask 002 && git submodule update)
+    
+    # Set application permissions
+    system %(chown -R root:nobody #{app_basedir})
+    system %(chmod -R 0755 #{app_basedir})
+    
+    # Set log and tmp directory permissions
+    system %(find #{app_basedir}* -name log -o -name tmp | xargs chmod -R 0777)
 
     # determine if app restart is needed
     if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
