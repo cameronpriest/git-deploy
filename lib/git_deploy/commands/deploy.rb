@@ -38,10 +38,6 @@ module GitDeploy::Command
       envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
       ENV['PATH'] = envpath
 
-      @app_dir = "/var/apps/"
-
-      @app_name = Dir.pwd.split("/").pop
-      
       puts @app_name
       
       log "log success"
