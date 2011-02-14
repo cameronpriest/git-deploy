@@ -16,6 +16,9 @@ end
 
 module GitDeploy::Command
   class Deploy < Base
+    def test
+      puts "OK"
+    end
     def receive
       begin
         if ENV['GIT_DIR'] == '.'
