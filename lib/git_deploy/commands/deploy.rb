@@ -43,7 +43,7 @@ module GitDeploy::Command
       
       puts args.inspect
 
-      puts @app_name
+      puts "#{@app_name} #{@app_dir} #{@args} #{@repo_dir}"
       
       log args.inspect
       
@@ -74,6 +74,9 @@ module GitDeploy::Command
       
       false
     end
+    
+    
+    
     def receive
       test
       
