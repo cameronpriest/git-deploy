@@ -20,14 +20,9 @@ module GitDeploy::Command
       STDERR.puts message if where == :stderr || where == :all
       STDOUT.puts message if where == :stdout # redundant to use all
       @log.info(message)  if where == :file || where == :all
-      STDOUT.flush
-      STDERR.flush
     end
 
     def hook
-      puts @app_dir
-      puts @app_name
-      puts @repo_dir
       
       begin
         if ENV['GIT_DIR'] == '.'
@@ -42,7 +37,6 @@ module GitDeploy::Command
         envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
         ENV['PATH'] = envpath
 
-
         # FileUtils.mkdir_p %w(log tmp)
         # FileUtils.chmod 0775, %w(log tmp)
         # FileUtils.touch [logfile, restart]
@@ -54,12 +48,6 @@ module GitDeploy::Command
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
         log "---> Using #{`bundle -v`.chomp}"
-        
-        
-
-        
-
-        # $stdout.sync = true
 
         # find out the current branch
         head = `git symbolic-ref HEAD`.chomp
@@ -81,7 +69,6 @@ module GitDeploy::Command
 
         # update the working copy
         # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`
-        puts "git archive #{newrev} | tar -x -C #{@app_dir}"
         `git archive #{newrev} | tar -x -C #{@app_dir}`
         # `umask 002 && git reset --hard #{newrev}`
         # `umask 002 && git checkout HEAD -f`
