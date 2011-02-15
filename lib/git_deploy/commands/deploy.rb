@@ -45,6 +45,7 @@ module GitDeploy::Command
 
         # find out the current branch
         head = `git symbolic-ref HEAD`.chomp
+        log "     #{head}"
         # abort if we're on a detached head
         exit unless $?.success?
 
@@ -121,9 +122,9 @@ module GitDeploy::Command
           # clean unversioned files from vendor (e.g. old submodules)
           system %(git clean -d -f vendor) # It looks like we may need to do this before we update the bundle not after
 
-
         else
           log "---> Initial Push"
+          changed_files = []
         end
 
         if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || oldrev == null_ref
