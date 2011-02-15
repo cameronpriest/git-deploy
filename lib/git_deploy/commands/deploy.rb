@@ -24,7 +24,11 @@ module GitDeploy::Command
       STDERR.flush
     end
 
-    def hook      
+    def hook
+      puts @app_dir
+      puts @app_name
+      puts @repo_dir
+      
       begin
         if ENV['GIT_DIR'] == '.'
           # this means the script has been called as a hook, not manually.
