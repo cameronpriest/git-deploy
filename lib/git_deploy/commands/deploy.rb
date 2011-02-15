@@ -23,7 +23,7 @@ module GitDeploy::Command
     end
 
     def hook
-      
+
       begin
         if ENV['GIT_DIR'] == '.'
           # this means the script has been called as a hook, not manually.
@@ -74,114 +74,113 @@ module GitDeploy::Command
         config = 'config/database.yml'
 
         if oldrev == null_ref
-          # this is the first push; this branch was just created
+          # # this is the first push; this branch was just created
+          # 
+          # unless File.exists?(config)
+          #   # install the database config from the example file
+          #   example = ['config/database.example.yml', config + '.example'].find { |f| File.exists? f }
+          #   FileUtils.cp example, config if example
+          # end
+        end
+        # start the post-reset hook in background
+        log "     "
+        log "---> Cloudbot (#{`hostname`.chomp}) received push"
+        log "     "
+        # log "---> "+`nohup .git/hooks/post-reset #{oldrev} #{newrev} | tee #{logfile} &`
+        # get a list of files that changed
+        changes = `git diff #{oldrev} #{newrev} --diff-filter=ACDMR --name-status`.split("\n")
 
-          unless File.exists?(config)
-            # install the database config from the example file
-            example = ['config/database.example.yml', config + '.example'].find { |f| File.exists? f }
-            FileUtils.cp example, config if example
-          end
-        else
-          # start the post-reset hook in background
-          log "     "
-          log "---> Cloudbot (#{`hostname`.chomp}) received push"
-          log "     "
-          # log "---> "+`nohup .git/hooks/post-reset #{oldrev} #{newrev} | tee #{logfile} &`
-          # get a list of files that changed
-          changes = `git diff #{oldrev} #{newrev} --diff-filter=ACDMR --name-status`.split("\n")
+        # make a hash of files that changed and how they changed
+        changes_hash = changes.inject(Hash.new { |h, k| h[k] = [] }) do |hash, line|
+          modifier, filename = line.split("\t", 2)
+          hash[modifier] << filename
+          hash
+        end
 
-          # make a hash of files that changed and how they changed
-          changes_hash = changes.inject(Hash.new { |h, k| h[k] = [] }) do |hash, line|
-            modifier, filename = line.split("\t", 2)
-            hash[modifier] << filename
-            hash
-          end
+        # create an array of files added, copied, modified or renamed
+        modified_files = %w(A C M R).inject([]) { |files, bit| files.concat changes_hash[bit] }
+        added_files = changes_hash['A'] # added
+        deleted_files = changes_hash['D'] # deleted
+        changed_files = modified_files + deleted_files # all
+        log "files changed: #{changed_files.size}"
+        changed_files.each do |file|
+          log " #{file}"
+        end
 
-          # create an array of files added, copied, modified or renamed
-          modified_files = %w(A C M R).inject([]) { |files, bit| files.concat changes_hash[bit] }
-          added_files = changes_hash['A'] # added
-          deleted_files = changes_hash['D'] # deleted
-          changed_files = modified_files + deleted_files # all
-          log "files changed: #{changed_files.size}"
-          changed_files.each do |file|
-            log " #{file}"
-          end
+        cached_assets_cleared = false
 
-          cached_assets_cleared = false
+        # detect modified asset dirs
+        asset_dirs = %w(public/stylesheets public/javascripts).select do |dir|
+          # did any on the assets under this dir change?
+          changed_files.any_in_dir?(dir)
+        end
 
-          # detect modified asset dirs
-          asset_dirs = %w(public/stylesheets public/javascripts).select do |dir|
-            # did any on the assets under this dir change?
-            changed_files.any_in_dir?(dir)
-          end
+        unless asset_dirs.empty?
+          # clear cached assets (unversioned/ignored files)
+          system %(git clean -x -f -- #{asset_dirs.join(' ')})
+          cached_assets_cleared = true
+        end
 
-          unless asset_dirs.empty?
-            # clear cached assets (unversioned/ignored files)
-            system %(git clean -x -f -- #{asset_dirs.join(' ')})
-            cached_assets_cleared = true
-          end
+        # clean unversioned files from vendor (e.g. old submodules)
+        system %(git clean -d -f vendor) # It looks like we may need to do this before we update the bundle not after
 
-          # clean unversioned files from vendor (e.g. old submodules)
-          system %(git clean -d -f vendor) # It looks like we may need to do this before we update the bundle not after
-          
-          log "oldrev = #{oldrev} #{oldrev == '0000000000000000000000000000000000000000'}"
+        log "oldrev = #{oldrev} #{oldrev == '0000000000000000000000000000000000000000'}"
 
-          if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || oldrev == "0000000000000000000000000000000000000000"
-            # update bundled gems if manifest file has changed
-            log "Updating bundle..."
-            log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
-            log "\n"
-            log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
-            raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
-          end
+        if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || oldrev == "0000000000000000000000000000000000000000"
+          # update bundled gems if manifest file has changed
+          log "Updating bundle..."
+          log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+          log "\n"
+          log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
+          raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
+        end
 
-          # run migrations when new ones added
-          if new_migrations = added_files.any_in_dir?('db/migrate')
-            system %(umask 002 && cd #{@app_dir} && rake db:migrate RAILS_ENV=#{RAILS_ENV})
-          end
+        # run migrations when new ones added
+        if new_migrations = added_files.any_in_dir?('db/migrate')
+          system %(umask 002 && cd #{@app_dir} && rake db:migrate RAILS_ENV=#{RAILS_ENV})
+        end
 
-          if modified_files.include?('.gitmodules')
-            # initialize new submodules
-            system %(umask 002 && git submodule init)
-            # sync submodule remote urls in case of changes
-            config = parse_configuration('.gitmodules')
+        if modified_files.include?('.gitmodules')
+          # initialize new submodules
+          system %(umask 002 && git submodule init)
+          # sync submodule remote urls in case of changes
+          config = parse_configuration('.gitmodules')
 
-            if config['submodule']
-              config['submodule'].values.each do |submodule|
-                path = submodule['path']
-                subconf = "#{path}/.git/config"
+          if config['submodule']
+            config['submodule'].values.each do |submodule|
+              path = submodule['path']
+              subconf = "#{path}/.git/config"
 
-                if File.exists? subconf
-                  old_url = `git config -f "#{subconf}" remote.origin.url`.chomp
-                  new_url = submodule['url']
-                  unless old_url == new_url
-                    log "changing #{path.inspect} URL:\n  #{old_url.inspect} → #{new_url.inspect}"
-                    `git config -f "#{subconf}" remote.origin.url "#{new_url}"`
-                  end
-                else
-                  $stderr.log "a submodule in #{path.inspect} doesn't exist"
+              if File.exists? subconf
+                old_url = `git config -f "#{subconf}" remote.origin.url`.chomp
+                new_url = submodule['url']
+                unless old_url == new_url
+                  log "changing #{path.inspect} URL:\n  #{old_url.inspect} → #{new_url.inspect}"
+                  `git config -f "#{subconf}" remote.origin.url "#{new_url}"`
                 end
+              else
+                $stderr.log "a submodule in #{path.inspect} doesn't exist"
               end
             end
           end
-          # update existing submodules
-          system %(umask 002 && git submodule update)
+        end
+        # update existing submodules
+        system %(umask 002 && git submodule update)
 
-          # Set application permissions
-          system %(chown -R root:nobody #{@app_dir})
-          system %(chmod -R 0755 #{@app_dir})
+        # Set application permissions
+        system %(chown -R root:nobody #{@app_dir})
+        system %(chmod -R 0755 #{@app_dir})
 
-          # Set log and tmp directory permissions
-          system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
+        # Set log and tmp directory permissions
+        system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
 
-          # determine if app restart is needed
-          if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
-            changed_files.any_in_dir?(%w(app config lib public vendor)) or changed_files.include?('Gemfile') or changed_files.include?('Gemfile.lock')
-            # tell Passenger to restart this app
-            FileUtils.touch "#{@app_dir}tmp/restart.txt"
-            log "", :stderr
-            log ":-)  restarting Passenger app"
-          end
+        # determine if app restart is needed
+        if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
+          changed_files.any_in_dir?(%w(app config lib public vendor)) or changed_files.include?('Gemfile') or changed_files.include?('Gemfile.lock')
+          # tell Passenger to restart this app
+          FileUtils.touch "#{@app_dir}tmp/restart.txt"
+          log "", :stderr
+          log ":-)  restarting Passenger app"
         end
         log "", :stderr
         log "---> Don't forget to push your code to github as well!", :stderr
@@ -197,7 +196,7 @@ module GitDeploy::Command
         `/var/repos/.notifications/deploy_fail.rb '#{@app_name}' '#{e.to_s}'` if File.exists? "/var/repos/.notifications/deploy_fail.rb"
         exit 1
       end
-      
+
       def parse_configuration(file)
         config = {}
         current = nil
