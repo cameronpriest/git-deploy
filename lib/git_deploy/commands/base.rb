@@ -9,7 +9,7 @@ module GitDeploy::Command
       @args = args
       pwd = Dir.pwd.split("/")
       pwd.delete ".git" # removes the git dir if we're running as a hook
-      @app_name = pwd.split("/").pop
+      @app_name = pwd.pop
       @app_dir = (ENV["DEPLOY_APPLICATION_DIR"] || "/var/apps/")+@app_name
       @repo_dir = pwd
     end
