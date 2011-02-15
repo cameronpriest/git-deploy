@@ -39,6 +39,8 @@ module GitDeploy::Command
       envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
       ENV['PATH'] = envpath
       
+      puts STDIN.inspect
+      
       puts args.inspect
 
       puts @app_name
