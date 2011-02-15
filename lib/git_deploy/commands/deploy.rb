@@ -42,7 +42,7 @@ module GitDeploy::Command
         envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
         ENV['PATH'] = envpath
 
-        FileUtils.mkdir_p(["#{@app_dir}#{@app_name}/log","/var/apps/#{@app_name}/tmp"])
+        # FileUtils.mkdir_p(["#{@app_dir}#{@app_name}/log","/var/apps/#{@app_name}/tmp"])
         
 
         # $stdout.sync = true
@@ -67,8 +67,8 @@ module GitDeploy::Command
 
         # update the working copy
         # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`
-        puts "git archive #{newrev} | tar -x -C #{@app_basedir}"
-        `git archive #{newrev} | tar -x -C #{@app_basedir}`
+        puts "git archive #{newrev} | tar -x -C #{@app_dir}"
+        `git archive #{newrev} | tar -x -C #{@app_dir}`
         # `umask 002 && git reset --hard #{newrev}`
         # `umask 002 && git checkout HEAD -f`
 
@@ -86,10 +86,10 @@ module GitDeploy::Command
         if oldrev == null_ref
           # this is the first push; this branch was just created
           require 'fileutils'
-          FileUtils.mkdir_p %w(log tmp)
-          FileUtils.chmod 0775, %w(log tmp)
-          FileUtils.touch [logfile, restart]
-          FileUtils.chmod 0664, [logfile, restart]
+          # FileUtils.mkdir_p %w(log tmp)
+          # FileUtils.chmod 0775, %w(log tmp)
+          # FileUtils.touch [logfile, restart]
+          # FileUtils.chmod 0664, [logfile, restart]
 
           unless File.exists?(config)
             # install the database config from the example file
