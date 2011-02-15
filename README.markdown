@@ -1,3 +1,11 @@
+A Work In Progress
+==================
+This is going to be the sloppiest, soggiest repo in the world for a while.
+
+Forked from mislav, git-deploy was rewritten with the hopes of making it easier to setup, deploy, and maintain a server running a git deployment strategy.
+
+ - Uses a gem binary and a basic hook wrapper to allow for easy updates
+
 Capistrano strategy for smart git deployment
 ============================================
 
