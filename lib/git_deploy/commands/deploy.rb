@@ -24,14 +24,7 @@ module GitDeploy::Command
       STDERR.flush
     end
 
-    def hook
-      `git archive #{newrev} | tar -x -C #{@app_dir}`
-      
-      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
-      log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
-      log "---> Using #{`rvm-prompt i v p g`.chomp}"
-      log "---> Using #{`bundle -v`.chomp}"
-      
+    def hook      
       begin
         if ENV['GIT_DIR'] == '.'
           # this means the script has been called as a hook, not manually.
@@ -70,13 +63,19 @@ module GitDeploy::Command
 
         # update the working copy
         # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`
-        # `git archive #{newrev} | tar -x -C #{@app_dir}`
+        `git archive #{newrev} | tar -x -C #{@app_dir}`
         # `umask 002 && git reset --hard #{newrev}`
         # `umask 002 && git checkout HEAD -f`
 
         config = 'config/database.yml'
         logfile = 'log/deploy.log'
         restart = 'tmp/restart.txt'
+        
+        # We can't start logger until the application directory is created
+        @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
+        log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
+        log "---> Using #{`rvm-prompt i v p g`.chomp}"
+        log "---> Using #{`bundle -v`.chomp}"
 
         if oldrev == null_ref
           # this is the first push; this branch was just created
