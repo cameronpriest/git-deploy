@@ -42,7 +42,7 @@ module GitDeploy::Command
         envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
         ENV['PATH'] = envpath
 
-        # FileUtils.mkdir_p(["#{@app_dir}#{@app_name}/log","/var/apps/#{@app_name}/tmp"])
+        FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
         
 
         # $stdout.sync = true
