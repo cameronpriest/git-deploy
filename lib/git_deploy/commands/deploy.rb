@@ -23,24 +23,11 @@ module GitDeploy::Command
       STDOUT.flush
       STDERR.flush
     end
-        
-    def test
-      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
-      
-      log STDIN.read.inspect
 
-      log "#{@app_name} #{@app_dir} #{@args} #{@repo_dir}"
-      
-      log args.inspect
-      
-      log "log success"
-      
-      false
-    end
-    
-    
-    
     def receive
+      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
+      # b72b798
+      
       begin
         if ENV['GIT_DIR'] == '.'
           # this means the script has been called as a hook, not manually.
