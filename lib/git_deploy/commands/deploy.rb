@@ -27,8 +27,8 @@ module GitDeploy::Command
     def hook
       @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
       log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
-      log "---> Using #{`rvm -v`}"
-      log "---> Using #{`bundle -v`}"
+      log "---> Using #{`rvm -v`.chomp}"
+      log "---> Using #{`bundle -v`.chomp}"
       # b72b798
       
       begin
