@@ -38,6 +38,8 @@ module GitDeploy::Command
       cmd = %(bash -c "[ -f /etc/profile ] && source /etc/profile; echo $PATH")
       envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
       ENV['PATH'] = envpath
+      
+      puts args.inspect
 
       puts @app_name
       
@@ -68,8 +70,11 @@ module GitDeploy::Command
 
       log "checking out (#{oldrev} -> #{newrev})"
       
+      false
     end
     def receive
+      test
+      
       begin
         if ENV['GIT_DIR'] == '.'
           # this means the script has been called as a hook, not manually.
