@@ -37,10 +37,6 @@ module GitDeploy::Command
         envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
         ENV['PATH'] = envpath
 
-        # FileUtils.mkdir_p %w(log tmp)
-        # FileUtils.chmod 0775, %w(log tmp)
-        # FileUtils.touch [logfile, restart]
-        # FileUtils.chmod 0664, [logfile, restart]
         FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
@@ -88,45 +84,49 @@ module GitDeploy::Command
         log "     "
         # log "---> "+`nohup .git/hooks/post-reset #{oldrev} #{newrev} | tee #{logfile} &`
         # get a list of files that changed
-        changes = `git diff #{oldrev} #{newrev} --diff-filter=ACDMR --name-status`.split("\n")
+        unless oldref==null_ref
+          changes = `git diff #{oldrev} #{newrev} --diff-filter=ACDMR --name-status`.split("\n")
 
-        # make a hash of files that changed and how they changed
-        changes_hash = changes.inject(Hash.new { |h, k| h[k] = [] }) do |hash, line|
-          modifier, filename = line.split("\t", 2)
-          hash[modifier] << filename
-          hash
+          # make a hash of files that changed and how they changed
+          changes_hash = changes.inject(Hash.new { |h, k| h[k] = [] }) do |hash, line|
+            modifier, filename = line.split("\t", 2)
+            hash[modifier] << filename
+            hash
+          end
+
+          # create an array of files added, copied, modified or renamed
+          modified_files = %w(A C M R).inject([]) { |files, bit| files.concat changes_hash[bit] }
+          added_files = changes_hash['A'] # added
+          deleted_files = changes_hash['D'] # deleted
+          changed_files = modified_files + deleted_files # all
+          log "files changed: #{changed_files.size}"
+          changed_files.each do |file|
+            log " #{file}"
+          end
+
+          cached_assets_cleared = false
+
+          # detect modified asset dirs
+          asset_dirs = %w(public/stylesheets public/javascripts).select do |dir|
+            # did any on the assets under this dir change?
+            changed_files.any_in_dir?(dir)
+          end
+
+          unless asset_dirs.empty?
+            # clear cached assets (unversioned/ignored files)
+            system %(git clean -x -f -- #{asset_dirs.join(' ')})
+            cached_assets_cleared = true
+          end
+
+          # clean unversioned files from vendor (e.g. old submodules)
+          system %(git clean -d -f vendor) # It looks like we may need to do this before we update the bundle not after
+
+
+        else
+          log "---> Initial Push"
         end
 
-        # create an array of files added, copied, modified or renamed
-        modified_files = %w(A C M R).inject([]) { |files, bit| files.concat changes_hash[bit] }
-        added_files = changes_hash['A'] # added
-        deleted_files = changes_hash['D'] # deleted
-        changed_files = modified_files + deleted_files # all
-        log "files changed: #{changed_files.size}"
-        changed_files.each do |file|
-          log " #{file}"
-        end
-
-        cached_assets_cleared = false
-
-        # detect modified asset dirs
-        asset_dirs = %w(public/stylesheets public/javascripts).select do |dir|
-          # did any on the assets under this dir change?
-          changed_files.any_in_dir?(dir)
-        end
-
-        unless asset_dirs.empty?
-          # clear cached assets (unversioned/ignored files)
-          system %(git clean -x -f -- #{asset_dirs.join(' ')})
-          cached_assets_cleared = true
-        end
-
-        # clean unversioned files from vendor (e.g. old submodules)
-        system %(git clean -d -f vendor) # It looks like we may need to do this before we update the bundle not after
-
-        log "oldrev = #{oldrev} #{oldrev == '0000000000000000000000000000000000000000'}"
-
-        if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || oldrev == "0000000000000000000000000000000000000000"
+        if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || oldrev == null_ref
           # update bundled gems if manifest file has changed
           log "Updating bundle..."
           log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
