@@ -29,7 +29,6 @@ module GitDeploy::Command
       log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
       log "---> Using #{`rvm-prompt i v p g`.chomp}"
       log "---> Using #{`bundle -v`.chomp}"
-      # b72b798
       
       begin
         if ENV['GIT_DIR'] == '.'
@@ -133,7 +132,7 @@ module GitDeploy::Command
           # clean unversioned files from vendor (e.g. old submodules)
           system %(git clean -d -f vendor) # It looks like we may need to do this before we update the bundle not after
 
-          if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock')
+          if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || oldrev == "0000000000000000000000000000000000000000"
             # update bundled gems if manifest file has changed
             log "Updating bundle..."
             log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`

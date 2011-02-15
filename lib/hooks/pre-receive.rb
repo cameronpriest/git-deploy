@@ -1,5 +1,7 @@
-#!/usr/bin/env ruby
-require 'rubygems'
-require 'git_deploy'
-require 'git_deploy/command'
-GitDeploy::Command.run "deploy:receive", ""
+#!/bin/sh
+if [[ -s /usr/local/rvm/scripts/rvm ]] ; then source /usr/local/rvm/scripts/rvm ; fi
+rvm 1.8.7@base
+
+git-deploy deploy:hook
+
+exit 1
