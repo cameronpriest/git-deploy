@@ -8,8 +8,8 @@ module GitDeploy::Command
     def initialize(args)
       @args = args
       @app_name = Dir.pwd.split("/").pop
-      @app_dir = Dir.pwd
-      @repo_dir = (ENV["DEPLOY_REPOSITORY_DIR"] || "/var/repos/")+@app_name
+      @app_dir = (ENV["DEPLOY_APPLICATION_DIR"] || "/var/apps/")+@app_name
+      @repo_dir = Dir.pwd
     end
   end
 end
