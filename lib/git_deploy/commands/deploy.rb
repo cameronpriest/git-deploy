@@ -41,8 +41,6 @@ module GitDeploy::Command
     
     
     def receive
-      test
-      
       begin
         if ENV['GIT_DIR'] == '.'
           # this means the script has been called as a hook, not manually.
