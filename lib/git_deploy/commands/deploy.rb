@@ -67,6 +67,7 @@ module GitDeploy::Command
 
         # update the working copy
         # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`
+        puts "git archive #{newrev} | tar -x -C #{@app_basedir}"
         `git archive #{newrev} | tar -x -C #{@app_basedir}`
         # `umask 002 && git reset --hard #{newrev}`
         # `umask 002 && git checkout HEAD -f`
@@ -76,6 +77,7 @@ module GitDeploy::Command
         restart = 'tmp/restart.txt'
         
         # We can't start logger until the application directory is created
+        puts "Log #{@app_dir}/log/deploy.log"
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
