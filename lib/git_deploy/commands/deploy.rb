@@ -17,6 +17,7 @@ end
 module GitDeploy::Command
   class Deploy < Base
     def log(message,where = :all)
+      puts "#{@app_dir}/log/deploy.log"
       @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
       STDERR.puts message if where == :stderr || where == :all
       STDOUT.puts message if where == :stdout # redundant to use all
@@ -42,22 +43,24 @@ module GitDeploy::Command
       
       log "log success"
       
-      puts "OK"
+      puts "OK1"
       
       head = `git symbolic-ref HEAD`.chomp
+      
+      puts "OK2"
       # abort if we're on a detached head
       exit unless $?.success?
-
+      puts "OK3"
       oldrev = newrev = nil
       null_ref = '0' * 40
-
+      puts "OK4"
       # read the STDIN to detect if this push changed the current branch
       while newrev.nil? and gets
         # each line of input is in form of "<oldrev> <newrev> <refname>"
         revs = $_.split
         oldrev, newrev = revs if head == revs.pop
       end
-
+      puts "OK5"
       # abort if there's no update, or in case the branch is deleted
       exit if newrev.nil? or newrev == null_ref
 
