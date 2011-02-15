@@ -45,8 +45,13 @@ module GitDeploy::Command
 
         FileUtils.mkdir_p %w(log tmp)
         FileUtils.chmod 0775, %w(log tmp)
-        FileUtils.touch [logfile, restart]
-        FileUtils.chmod 0664, [logfile, restart]
+        # FileUtils.touch [logfile, restart]
+        # FileUtils.chmod 0664, [logfile, restart]
+        @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
+        log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
+        log "---> Using #{`rvm-prompt i v p g`.chomp}"
+        log "---> Using #{`bundle -v`.chomp}"
+        
         # 
         # FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
         
@@ -83,11 +88,6 @@ module GitDeploy::Command
         restart = 'tmp/restart.txt'
         
         # We can't start logger until the application directory is created
-        puts "Log #{@app_dir}/log/deploy.log"
-        @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
-        log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
-        log "---> Using #{`rvm-prompt i v p g`.chomp}"
-        log "---> Using #{`bundle -v`.chomp}"
 
         if oldrev == null_ref
           # this is the first push; this branch was just created
