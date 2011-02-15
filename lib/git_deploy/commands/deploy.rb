@@ -41,6 +41,8 @@ module GitDeploy::Command
 
       puts @app_name
       
+      log args.inspect
+      
       log "log success"
       
       puts "OK1"
