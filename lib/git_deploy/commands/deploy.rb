@@ -17,8 +17,6 @@ end
 module GitDeploy::Command
   class Deploy < Base
     def log(message,where = :all)
-      puts "#{@app_dir}/log/deploy.log"
-      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
       STDERR.puts message if where == :stderr || where == :all
       STDOUT.puts message if where == :stdout # redundant to use all
       @log.info(message)  if where == :file || where == :all
@@ -27,50 +25,15 @@ module GitDeploy::Command
     end
         
     def test
-      if ENV['GIT_DIR'] == '.'
-        # this means the script has been called as a hook, not manually.
-        # get the proper GIT_DIR so we can descend into the working copy dir;
-        # if we don't then `git reset --hard` doesn't affect the working tree.
-        Dir.chdir('..')
-        ENV['GIT_DIR'] = '.git'
-      end
-
-      cmd = %(bash -c "[ -f /etc/profile ] && source /etc/profile; echo $PATH")
-      envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
-      ENV['PATH'] = envpath
+      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
       
-      puts STDIN.read.inspect
-      
-      puts args.inspect
+      log STDIN.read.inspect
 
-      puts "#{@app_name} #{@app_dir} #{@args} #{@repo_dir}"
+      log "#{@app_name} #{@app_dir} #{@args} #{@repo_dir}"
       
       log args.inspect
       
       log "log success"
-      
-      puts "OK1"
-      
-      head = `git symbolic-ref HEAD`.chomp
-      
-      puts "OK2"
-      # abort if we're on a detached head
-      exit unless $?.success?
-      puts "OK3"
-      oldrev = newrev = nil
-      null_ref = '0' * 40
-      puts "OK4"
-      # read the STDIN to detect if this push changed the current branch
-      while newrev.nil? and gets
-        # each line of input is in form of "<oldrev> <newrev> <refname>"
-        revs = $_.split
-        oldrev, newrev = revs if head == revs.pop
-      end
-      puts "OK5"
-      # abort if there's no update, or in case the branch is deleted
-      exit if newrev.nil? or newrev == null_ref
-
-      log "checking out (#{oldrev} -> #{newrev})"
       
       false
     end
