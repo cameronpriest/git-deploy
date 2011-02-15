@@ -67,7 +67,7 @@ module GitDeploy::Command
 
         # update the working copy
         # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`
-        `git archive #{newrev} | tar -x -C #{@app_dir}`
+        `git archive #{newrev} | tar -x -C #{@app_basedir}`
         # `umask 002 && git reset --hard #{newrev}`
         # `umask 002 && git checkout HEAD -f`
 
