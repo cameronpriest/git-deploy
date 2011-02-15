@@ -85,7 +85,7 @@ module GitDeploy::Command
         log "     "
         # log "---> "+`nohup .git/hooks/post-reset #{oldrev} #{newrev} | tee #{logfile} &`
         # get a list of files that changed
-        unless oldref==null_ref
+        unless oldrev==null_ref
           changes = `git diff #{oldrev} #{newrev} --diff-filter=ACDMR --name-status`.split("\n")
 
           # make a hash of files that changed and how they changed
