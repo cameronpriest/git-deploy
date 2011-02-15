@@ -24,8 +24,11 @@ module GitDeploy::Command
       STDERR.flush
     end
 
-    def receive
+    def hook
       @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
+      log "---> Using #{GEM_NAME} #{VERSION}"
+      log "---> Using #{`rvm -v`}"
+      log "---> Using #{`bundle -v`}"
       # b72b798
       
       begin
@@ -63,8 +66,6 @@ module GitDeploy::Command
 
         # abort if there's no update, or in case the branch is deleted
         exit if newrev.nil? or newrev == null_ref
-
-        log "checking out (#{oldrev} -> #{newrev})"
 
         # update the working copy
         # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`

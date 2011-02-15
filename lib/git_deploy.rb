@@ -1,4 +1,7 @@
-module GitDeploy; end
+module GitDeploy
+  GEM_NAME = "git-deploy"
+  VERSION = "0.4.2" unless defined?(::GitDeploy::VERSION)
+end
 
 begin
 require 'capistrano/recipes/deploy/scm/git'
