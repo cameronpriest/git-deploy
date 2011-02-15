@@ -127,6 +127,8 @@ module GitDeploy::Command
 
           # clean unversioned files from vendor (e.g. old submodules)
           system %(git clean -d -f vendor) # It looks like we may need to do this before we update the bundle not after
+          
+          log "oldrev = #{oldrev} #{oldrev == '0000000000000000000000000000000000000000'}"
 
           if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || oldrev == "0000000000000000000000000000000000000000"
             # update bundled gems if manifest file has changed
