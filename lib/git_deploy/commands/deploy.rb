@@ -47,6 +47,8 @@ module GitDeploy::Command
         # FileUtils.chmod 0775, %w(log tmp)
         # FileUtils.touch [logfile, restart]
         # FileUtils.chmod 0664, [logfile, restart]
+        puts ["#{@app_dir}/log","#{@app_dir}/tmp"].inspect
+        
         FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
