@@ -180,7 +180,7 @@ module GitDeploy::Command
         if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
           changed_files.any_in_dir?(%w(app config lib public vendor)) or changed_files.include?('Gemfile') or changed_files.include?('Gemfile.lock')
           # tell Passenger to restart this app
-          FileUtils.touch "#{@app_dir}tmp/restart.txt"
+          FileUtils.touch "#{@app_dir}/tmp/restart.txt"
           log "", :stderr
           log ":-)  restarting Passenger app"
         end
