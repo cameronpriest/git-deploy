@@ -122,6 +122,36 @@ module GitDeploy::Command
           # clean unversioned files from vendor (e.g. old submodules)
           system %(git clean -d -f vendor) # It looks like we may need to do this before we update the bundle not after
 
+          # run migrations when new ones added
+          if new_migrations = added_files.any_in_dir?('db/migrate')
+            system %(umask 002 && cd #{@app_dir} && rake db:migrate RAILS_ENV=#{RAILS_ENV})
+          end
+
+          if modified_files.include?('.gitmodules')
+            # initialize new submodules
+            system %(umask 002 && git submodule init)
+            # sync submodule remote urls in case of changes
+            config = parse_configuration('.gitmodules')
+
+            if config['submodule']
+              config['submodule'].values.each do |submodule|
+                path = submodule['path']
+                subconf = "#{path}/.git/config"
+
+                if File.exists? subconf
+                  old_url = `git config -f "#{subconf}" remote.origin.url`.chomp
+                  new_url = submodule['url']
+                  unless old_url == new_url
+                    log "changing #{path.inspect} URL:\n  #{old_url.inspect} → #{new_url.inspect}"
+                    `git config -f "#{subconf}" remote.origin.url "#{new_url}"`
+                  end
+                else
+                  $stderr.log "a submodule in #{path.inspect} doesn't exist"
+                end
+              end
+            end
+          end
+
         else
           log "---> Initial Push"
           changed_files = []
@@ -136,35 +166,6 @@ module GitDeploy::Command
           raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
         end
 
-        # run migrations when new ones added
-        if new_migrations = added_files.any_in_dir?('db/migrate')
-          system %(umask 002 && cd #{@app_dir} && rake db:migrate RAILS_ENV=#{RAILS_ENV})
-        end
-
-        if modified_files.include?('.gitmodules')
-          # initialize new submodules
-          system %(umask 002 && git submodule init)
-          # sync submodule remote urls in case of changes
-          config = parse_configuration('.gitmodules')
-
-          if config['submodule']
-            config['submodule'].values.each do |submodule|
-              path = submodule['path']
-              subconf = "#{path}/.git/config"
-
-              if File.exists? subconf
-                old_url = `git config -f "#{subconf}" remote.origin.url`.chomp
-                new_url = submodule['url']
-                unless old_url == new_url
-                  log "changing #{path.inspect} URL:\n  #{old_url.inspect} → #{new_url.inspect}"
-                  `git config -f "#{subconf}" remote.origin.url "#{new_url}"`
-                end
-              else
-                $stderr.log "a submodule in #{path.inspect} doesn't exist"
-              end
-            end
-          end
-        end
         # update existing submodules
         system %(umask 002 && git submodule update)
 
