@@ -23,6 +23,13 @@ module GitDeploy::Command
     end
 
     def hook
+      # display current versions
+      # First push?
+      # Yes >
+      #   look for changes? NO
+      #   clear cached assets? NO
+      #   
+      
 
       begin
         if ENV['GIT_DIR'] == '.'
@@ -39,6 +46,8 @@ module GitDeploy::Command
 
         FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
+        log ENV.zip.inspect
+        log ""
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
         log "---> Using #{`bundle -v`.chomp}"
