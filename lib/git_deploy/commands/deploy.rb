@@ -42,7 +42,13 @@ module GitDeploy::Command
         envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
         ENV['PATH'] = envpath
 
-        FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
+
+        FileUtils.mkdir_p %w(log tmp)
+        FileUtils.chmod 0775, %w(log tmp)
+        FileUtils.touch [logfile, restart]
+        FileUtils.chmod 0664, [logfile, restart]
+        # 
+        # FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
         
 
         # $stdout.sync = true
@@ -85,11 +91,6 @@ module GitDeploy::Command
 
         if oldrev == null_ref
           # this is the first push; this branch was just created
-          require 'fileutils'
-          # FileUtils.mkdir_p %w(log tmp)
-          # FileUtils.chmod 0775, %w(log tmp)
-          # FileUtils.touch [logfile, restart]
-          # FileUtils.chmod 0664, [logfile, restart]
 
           unless File.exists?(config)
             # install the database config from the example file
