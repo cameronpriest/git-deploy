@@ -40,13 +40,13 @@ module GitDeploy::Command
           ENV['GIT_DIR'] = '.git'
         end
 
-        cmd = %(bash -c "[ -f /etc/profile ] && source /etc/profile; echo $PATH")
-        envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
-        ENV['PATH'] = envpath
+        # cmd = %(bash -c "[ -f /etc/profile ] && source /etc/profile; echo $PATH")
+        # envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
+        # ENV['PATH'] = envpath
 
         FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
-        log ENV.zip.inspect
+        # log ENV.zip.inspect
         log ""
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"

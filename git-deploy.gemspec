@@ -16,4 +16,6 @@ Gem::Specification.new do |gem|
   gem.has_rdoc = false
   
   gem.files = Dir['Rakefile', '{bin,lib,man,test,spec}/**/*', 'README*', 'LICENSE*'] & `git ls-files`.split("\n")
+  
+  # gem.add_dependency "json",        "~> 1.4.6" # [leftoff]
 end
