@@ -46,9 +46,6 @@ module GitDeploy::Command
         FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         # log ENV.zip.inspect
-        log ARGV.inspect
-        log STDIN.read.inspect
-        log $_.inspect
         log ""
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
@@ -65,7 +62,7 @@ module GitDeploy::Command
 
         log "A"
         # read the STDIN to detect if this push changed the current branch
-        while newrev.nil? and gets
+        while newrev.nil? and STDIN.gets
           # each line of input is in form of "<oldrev> <newrev> <refname>"
           revs = $_.split
           oldrev, newrev = revs if head == revs.pop
