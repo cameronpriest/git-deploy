@@ -54,7 +54,7 @@ module GitDeploy::Command
     def set_references
       if STDIN.gets
         references = $_.split
-        head = revs.pop
+        head = references.pop
         @old_reference, @new_reference = references if @head == head
       end
       raise "Git repository branch may not be equal to the pushed branch!" if @new_reference.nil? or @new_reference == NULL_REFERENCE
