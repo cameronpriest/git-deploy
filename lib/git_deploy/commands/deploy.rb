@@ -51,6 +51,9 @@ module GitDeploy::Command
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
         log "---> Using #{`bundle -v`.chomp}"
+        
+        log ""
+        log `git status -s`
 
         # find out the current branch
         head = `git symbolic-ref HEAD`.chomp
@@ -109,10 +112,10 @@ module GitDeploy::Command
           added_files = changes_hash['A'] # added
           deleted_files = changes_hash['D'] # deleted
           changed_files = modified_files + deleted_files # all
-          log "files changed: #{changed_files.size}"
-          changed_files.each do |file|
-            log " #{file}"
-          end
+          # log "files changed: #{changed_files.size}"
+          # changed_files.each do |file|
+          #   log " #{file}"
+          # end
 
           cached_assets_cleared = false
 
@@ -223,7 +226,6 @@ module GitDeploy::Command
             current[key] = value
           end
         end
-
         config
       end      
     end
