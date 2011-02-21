@@ -118,7 +118,7 @@ module GitDeploy::Command
 
         # find out the current branch
         @head = `git symbolic-ref HEAD`.chomp
-        log "     #{head}"
+        log "     #{@head}"
         # abort if we're on a detached head
         exit unless $?.success?
 
