@@ -65,7 +65,7 @@ module GitDeploy::Command
           # each line of input is in form of "<oldrev> <newrev> <refname>"
           revs = $_.split
           revhead = revs.pop
-          oldrev, newrev = revs if head == revs.pop
+          oldrev, newrev = revs if head == revhead
         end
 
         # abort if there's no update, or in case the branch is deleted
@@ -202,6 +202,7 @@ module GitDeploy::Command
         pre = "!!!! "
         STDERR.puts ""
         STDERR.puts pre+e.to_s
+        STDERR.puts ""
         STDERR.puts pre+"Reverting application to previous working state"
         # tell Passenger to restart this app
         FileUtils.touch "#{@app_dir}/tmp/restart.txt"
