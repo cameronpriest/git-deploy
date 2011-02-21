@@ -47,7 +47,7 @@ module GitDeploy::Command
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         # log ENV.zip.inspect
         log ARGV.inspect
-        log STDIN.inspect
+        log STDIN.read.inspect
         log $_.inspect
         log ""
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
