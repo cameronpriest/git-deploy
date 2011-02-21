@@ -85,6 +85,7 @@ Capistrano::Configuration.instance(true).load do
       command << "chmod g+ws #{deploy_to}" if shared
       command << "chown -R git:git #{deploy_to}"
       command << "cd #{deploy_to}"
+      command << "su git"
       command << "git init #{shared ? '--shared' : ''}"
       command << "sed -i'' -e 's/master/#{branch}/' .git/HEAD" unless branch == 'master'
       command << "git config --bool receive.denyNonFastForwards false" if shared

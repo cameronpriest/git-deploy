@@ -48,7 +48,7 @@ module GitDeploy::Command
     end
 
     def install_application
-      `su git && umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
+      `umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
     end
 
     def set_references
