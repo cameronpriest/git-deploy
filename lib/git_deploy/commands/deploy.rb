@@ -48,7 +48,7 @@ module GitDeploy::Command
     end
 
     def install_application
-      `umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
+      `su git && umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
     end
 
     def set_references
@@ -112,6 +112,7 @@ module GitDeploy::Command
         @old_reference = @new_reference = nil
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         log ""
+        log "     User: #{`whoami`}"
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
         log "---> Using #{`bundle -v`.chomp}"
