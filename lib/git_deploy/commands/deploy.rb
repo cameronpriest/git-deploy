@@ -60,20 +60,15 @@ module GitDeploy::Command
         oldrev = newrev = nil
         null_ref = '0' * 40
 
-        log "A"
         # read the STDIN to detect if this push changed the current branch
         while newrev.nil? and STDIN.gets
-          log $_
           # each line of input is in form of "<oldrev> <newrev> <refname>"
-          revs = $_.split
-          log revs.inspect
+          revhead = revs.pop
           oldrev, newrev = revs if head == revs.pop
-          log [oldrev, newrev].inspect
         end
-        log "B"
 
         # abort if there's no update, or in case the branch is deleted
-        exit if newrev.nil? or newrev == null_ref
+        raise "Git repository branch may not be equal to the pushed branch!" if newrev.nil? or newrev == null_ref
 
         # update the working copy
         # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`
