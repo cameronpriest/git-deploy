@@ -17,6 +17,71 @@ end
 module GitDeploy::Command
   class Deploy < Base
     NULL_REFERENCE = '0' * 40
+    
+    def copy_configurations
+      # config = 'config/database.yml'
+      # 
+      # if @old_reference == NULL_REFERENCE
+      #   # this is the first push; this branch was just created
+      #   
+      #   unless File.exists?(config)
+      #     # install the database config from the example file
+      #     example = ['config/database.example.yml', config + '.example'].find { |f| File.exists? f }
+      #     FileUtils.cp example, config if example
+      #   end
+      # end
+    end
+
+    def restart_application
+      FileUtils.touch "#{@app_dir}/tmp/restart.txt"
+      log "", :stderr
+      log ":-)  restarting Passenger app"
+    end
+
+    def bundle_install
+      # update bundled gems if manifest file has changed
+      log "Updating bundle..."
+      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+      log "\n"
+      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
+      raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
+    end
+
+    def install_application
+      `umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
+    end
+
+    def set_references
+      if STDIN.gets
+        references = $_.split
+        head = revs.pop
+        @old_reference, @new_reference = references if @head == head
+      end
+      raise "Git repository branch may not be equal to the pushed branch!" if @new_reference.nil? or @new_reference == NULL_REFERENCE
+    end
+    
+    def ensure_log_tmp
+      FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
+      system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
+    end
+
+    def parse_configuration(file)
+      config = {}
+      current = nil
+
+      File.open(file).each_line do |line|
+        case line
+        when /^\[(\w+)(?: "(.+)")\]/
+          key, subkey = $1, $2
+          current = (config[key] ||= {})
+          current = (current[subkey] ||= {}) if subkey
+        else
+          key, value = line.strip.split(' = ')
+          current[key] = value
+        end
+      end
+      config
+    end
 
     def log(message,where = :all)
       STDERR.puts message if where == :stderr || where == :all
@@ -170,71 +235,6 @@ module GitDeploy::Command
         `/var/repos/.notifications/deploy_fail.rb '#{@app_name}' '#{e.to_s}'` if File.exists? "/var/repos/.notifications/deploy_fail.rb"
         exit 1
       end
-
-      def copy_configurations
-        # config = 'config/database.yml'
-        # 
-        # if @old_reference == NULL_REFERENCE
-        #   # this is the first push; this branch was just created
-        #   
-        #   unless File.exists?(config)
-        #     # install the database config from the example file
-        #     example = ['config/database.example.yml', config + '.example'].find { |f| File.exists? f }
-        #     FileUtils.cp example, config if example
-        #   end
-        # end
-      end
-
-      def restart_application
-        FileUtils.touch "#{@app_dir}/tmp/restart.txt"
-        log "", :stderr
-        log ":-)  restarting Passenger app"
-      end
-
-      def bundle_install
-        # update bundled gems if manifest file has changed
-        log "Updating bundle..."
-        log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
-        log "\n"
-        log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
-        raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
-      end
-
-      def install_application
-        `umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
-      end
-
-      def set_references
-        if STDIN.gets
-          references = $_.split
-          head = revs.pop
-          @old_reference, @new_reference = references if @head == head
-        end
-        raise "Git repository branch may not be equal to the pushed branch!" if @new_reference.nil? or @new_reference == NULL_REFERENCE
-      end
-      
-      def ensure_log_tmp
-        FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
-        system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
-      end
-
-      def parse_configuration(file)
-        config = {}
-        current = nil
-
-        File.open(file).each_line do |line|
-          case line
-          when /^\[(\w+)(?: "(.+)")\]/
-            key, subkey = $1, $2
-            current = (config[key] ||= {})
-            current = (current[subkey] ||= {}) if subkey
-          else
-            key, value = line.strip.split(' = ')
-            current[key] = value
-          end
-        end
-        config
-      end      
     end
   end
 end
