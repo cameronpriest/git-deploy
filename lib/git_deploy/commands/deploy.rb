@@ -62,10 +62,10 @@ module GitDeploy::Command
 
         log "A"
         # read the STDIN to detect if this push changed the current branch
-        stdin = STDIN.gets
-        while newrev.nil? and stdin
+        while newrev.nil? and STDIN.gets
+          log $_
           # each line of input is in form of "<oldrev> <newrev> <refname>"
-          revs = stdin.split
+          revs = $_.split
           oldrev, newrev = revs if head == revs.pop
         end
         log "B"
