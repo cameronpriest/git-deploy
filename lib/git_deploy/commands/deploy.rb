@@ -47,6 +47,8 @@ module GitDeploy::Command
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         # log ENV.zip.inspect
         log ARGV.inspect
+        log STDIN.inspect
+        log $_.inspect
         log ""
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
@@ -61,7 +63,6 @@ module GitDeploy::Command
         oldrev = newrev = nil
         null_ref = '0' * 40
 
-        log $_.inspect
         log "A"
         # read the STDIN to detect if this push changed the current branch
         while newrev.nil? and gets
