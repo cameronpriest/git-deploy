@@ -52,9 +52,6 @@ module GitDeploy::Command
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
         log "---> Using #{`bundle -v`.chomp}"
         
-        log ""
-        log `git status -s`
-
         # find out the current branch
         head = `git symbolic-ref HEAD`.chomp
         log "     #{head}"
@@ -64,6 +61,7 @@ module GitDeploy::Command
         oldrev = newrev = nil
         null_ref = '0' * 40
 
+        log $_.inspect
         # read the STDIN to detect if this push changed the current branch
         while newrev.nil? and gets
           # each line of input is in form of "<oldrev> <newrev> <refname>"
@@ -112,10 +110,10 @@ module GitDeploy::Command
           added_files = changes_hash['A'] # added
           deleted_files = changes_hash['D'] # deleted
           changed_files = modified_files + deleted_files # all
-          # log "files changed: #{changed_files.size}"
-          # changed_files.each do |file|
-          #   log " #{file}"
-          # end
+          log "files changed: #{changed_files.size}"
+          changed_files.each do |file|
+            log " #{file}"
+          end
 
           cached_assets_cleared = false
 
