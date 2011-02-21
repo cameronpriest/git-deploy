@@ -53,7 +53,7 @@ Capistrano::Configuration.instance(true).load do
     desc "Deploys your project."
     task :default do
       unless multiple_hosts
-        push
+        # push
       else
         code
         # command = ["cd #{deploy_to}"]
@@ -64,7 +64,8 @@ Capistrano::Configuration.instance(true).load do
     end
 
     task :push do
-      system source.local.scm('push', remote, "#{revision}:#{branch}")
+      puts 'Now push your code! (use your non-root remote)'
+      # system source.local.scm('push', remote, "#{revision}:#{branch}")
     end
 
     task :code do
@@ -91,7 +92,7 @@ Capistrano::Configuration.instance(true).load do
       run command.join(' && ')
       
       install_hooks
-      push
+      # push
     end
 
     task :install_hooks do
