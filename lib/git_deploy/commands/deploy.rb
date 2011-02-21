@@ -16,6 +16,8 @@ end
 
 module GitDeploy::Command
   class Deploy < Base
+    NULL_REFERENCE = '0' * 40
+
     def log(message,where = :all)
       STDERR.puts message if where == :stderr || where == :all
       STDOUT.puts message if where == :stdout # redundant to use all
@@ -38,65 +40,36 @@ module GitDeploy::Command
           Dir.chdir('..')
           ENV['GIT_DIR'] = '.git'
         end
-
-        # cmd = %(bash -c "[ -f /etc/profile ] && source /etc/profile; echo $PATH")
-        # envpath = IO.popen(cmd, 'r') { |io| io.read.chomp }
-        # ENV['PATH'] = envpath
-
-        FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
+        
+        ensure_log_tmp
+                
+        @restart = false
+        @old_reference = @new_reference = nil
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
-        # log ENV.zip.inspect
         log ""
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
         log "---> Using #{`bundle -v`.chomp}"
-        
+
         # find out the current branch
-        head = `git symbolic-ref HEAD`.chomp
+        @head = `git symbolic-ref HEAD`.chomp
         log "     #{head}"
         # abort if we're on a detached head
         exit unless $?.success?
 
-        oldrev = newrev = nil
-        null_ref = '0' * 40
+        set_references
 
-        # read the STDIN to detect if this push changed the current branch
-        while newrev.nil? and STDIN.gets
-          # each line of input is in form of "<oldrev> <newrev> <refname>"
-          revs = $_.split
-          revhead = revs.pop
-          oldrev, newrev = revs if head == revhead
-        end
+        install_application
 
-        # abort if there's no update, or in case the branch is deleted
-        raise "Git repository branch may not be equal to the pushed branch!" if newrev.nil? or newrev == null_ref
+        copy_configurations
 
-        # update the working copy
-        # `git archive #{newrev} Gemfile Gemfile.lock | tar -x -C /var/apps/`
-        `umask 002 && git archive #{newrev} | tar -x -C #{@app_dir}`
-        # `umask 002 && git reset --hard #{newrev}`
-        # `umask 002 && git checkout HEAD -f`
-        log "C"
-
-        config = 'config/database.yml'
-
-        if oldrev == null_ref
-          # # this is the first push; this branch was just created
-          # 
-          # unless File.exists?(config)
-          #   # install the database config from the example file
-          #   example = ['config/database.example.yml', config + '.example'].find { |f| File.exists? f }
-          #   FileUtils.cp example, config if example
-          # end
-        end
-        # start the post-reset hook in background
         log "     "
         log "---> Cloudbot (#{`hostname`.chomp}) received push"
         log "     "
-        # log "---> "+`nohup .git/hooks/post-reset #{oldrev} #{newrev} | tee #{logfile} &`
+
         # get a list of files that changed
-        unless oldrev==null_ref
-          changes = `git diff #{oldrev} #{newrev} --diff-filter=ACDMR --name-status`.split("\n")
+        unless @old_reference==NULL_REFERENCE
+          changes = `git diff #{@old_reference} #{@new_reference} --diff-filter=ACDMR --name-status`.split("\n")
 
           # make a hash of files that changed and how they changed
           changes_hash = changes.inject(Hash.new { |h, k| h[k] = [] }) do |hash, line|
@@ -167,14 +140,8 @@ module GitDeploy::Command
           changed_files = []
         end
 
-        if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || oldrev == null_ref
-          # update bundled gems if manifest file has changed
-          log "Updating bundle..."
-          log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
-          log "\n"
-          log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
-          raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
-        end
+
+        bundle_install if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || @old_reference == NULL_REFERENCE
 
         # update existing submodules
         system %(umask 002 && git submodule update)
@@ -184,16 +151,10 @@ module GitDeploy::Command
         # system %(chmod -R 0755 #{@app_dir})
 
         # Set log and tmp directory permissions
-        system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
+        
 
-        # determine if app restart is needed
-        if cached_assets_cleared or new_migrations or !File.exists?('config/environment.rb') or
-          changed_files.any_in_dir?(%w(app config lib public vendor)) or changed_files.include?('Gemfile') or changed_files.include?('Gemfile.lock')
-          # tell Passenger to restart this app
-          FileUtils.touch "#{@app_dir}/tmp/restart.txt"
-          log "", :stderr
-          log ":-)  restarting Passenger app"
-        end
+        restart_application
+        
         log "", :stderr
         log "---> Don't forget to push your code to github as well!", :stderr
         log "", :stderr
@@ -208,6 +169,53 @@ module GitDeploy::Command
         FileUtils.touch "#{@app_dir}/tmp/restart.txt"
         `/var/repos/.notifications/deploy_fail.rb '#{@app_name}' '#{e.to_s}'` if File.exists? "/var/repos/.notifications/deploy_fail.rb"
         exit 1
+      end
+
+      def copy_configurations
+        # config = 'config/database.yml'
+        # 
+        # if @old_reference == NULL_REFERENCE
+        #   # this is the first push; this branch was just created
+        #   
+        #   unless File.exists?(config)
+        #     # install the database config from the example file
+        #     example = ['config/database.example.yml', config + '.example'].find { |f| File.exists? f }
+        #     FileUtils.cp example, config if example
+        #   end
+        # end
+      end
+
+      def restart_application
+        FileUtils.touch "#{@app_dir}/tmp/restart.txt"
+        log "", :stderr
+        log ":-)  restarting Passenger app"
+      end
+
+      def bundle_install
+        # update bundled gems if manifest file has changed
+        log "Updating bundle..."
+        log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+        log "\n"
+        log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
+        raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
+      end
+
+      def install_application
+        `umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
+      end
+
+      def set_references
+        if STDIN.gets
+          references = $_.split
+          head = revs.pop
+          @old_reference, @new_reference = references if @head == head
+        end
+        raise "Git repository branch may not be equal to the pushed branch!" if @new_reference.nil? or @new_reference == NULL_REFERENCE
+      end
+      
+      def ensure_log_tmp
+        FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
+        system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
       end
 
       def parse_configuration(file)
