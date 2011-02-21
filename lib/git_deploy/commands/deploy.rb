@@ -96,6 +96,8 @@ module GitDeploy::Command
       #   look for changes? NO
       #   clear cached assets? NO
       #
+      
+      raise "You must push your code as git user!" if `whoami`.chomp != git
 
       begin
         if ENV['GIT_DIR'] == '.'
@@ -112,7 +114,6 @@ module GitDeploy::Command
         @old_reference = @new_reference = nil
         @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         log ""
-        log "     User: #{`whoami`}"
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
         log "---> Using #{`bundle -v`.chomp}"
