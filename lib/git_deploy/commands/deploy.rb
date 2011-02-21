@@ -62,12 +62,14 @@ module GitDeploy::Command
         null_ref = '0' * 40
 
         log $_.inspect
+        log "A"
         # read the STDIN to detect if this push changed the current branch
         while newrev.nil? and gets
           # each line of input is in form of "<oldrev> <newrev> <refname>"
           revs = $_.split
           oldrev, newrev = revs if head == revs.pop
         end
+        log "B"
 
         # abort if there's no update, or in case the branch is deleted
         exit if newrev.nil? or newrev == null_ref
@@ -77,6 +79,7 @@ module GitDeploy::Command
         `git archive #{newrev} | tar -x -C #{@app_dir}`
         # `umask 002 && git reset --hard #{newrev}`
         # `umask 002 && git checkout HEAD -f`
+        log "C"
 
         config = 'config/database.yml'
 
