@@ -63,6 +63,7 @@ module GitDeploy::Command
         # read the STDIN to detect if this push changed the current branch
         while newrev.nil? and STDIN.gets
           # each line of input is in form of "<oldrev> <newrev> <refname>"
+          revs = $_.split
           revhead = revs.pop
           oldrev, newrev = revs if head == revs.pop
         end
