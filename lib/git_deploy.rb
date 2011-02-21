@@ -90,6 +90,7 @@ Capistrano::Configuration.instance(true).load do
       command << "sed -i'' -e 's/master/#{branch}/' .git/HEAD" unless branch == 'master'
       command << "git config --bool receive.denyNonFastForwards false" if shared
       command << "git config receive.denyCurrentBranch ignore"
+      command << "exit"
       run command.join(' && ')
       
       install_hooks
