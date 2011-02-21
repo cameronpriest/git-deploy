@@ -180,8 +180,8 @@ module GitDeploy::Command
         system %(umask 002 && git submodule update)
 
         # Set application permissions
-        system %(chown -R git:nobody #{@app_dir})
-        system %(chmod -R 0755 #{@app_dir})
+        # system %(chown -R git:nobody #{@app_dir})
+        # system %(chmod -R 0755 #{@app_dir})
 
         # Set log and tmp directory permissions
         system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
