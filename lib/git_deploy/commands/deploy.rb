@@ -66,7 +66,9 @@ module GitDeploy::Command
           log $_
           # each line of input is in form of "<oldrev> <newrev> <refname>"
           revs = $_.split
+          log revs.inspect
           oldrev, newrev = revs if head == revs.pop
+          log [oldrev, newrev].inspect
         end
         log "B"
 
