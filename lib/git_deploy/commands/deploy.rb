@@ -97,7 +97,7 @@ module GitDeploy::Command
       #   clear cached assets? NO
       #
       
-      raise "You must push your code as git user!" if `whoami`.chomp != git
+      raise "You must push your code as git user!" if `whoami`.chomp != 'git'
 
       begin
         if ENV['GIT_DIR'] == '.'
