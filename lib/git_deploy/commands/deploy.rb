@@ -39,12 +39,21 @@ module GitDeploy::Command
     end
 
     def bundle_install
-      # update bundled gems if manifest file has changed
-      log "Updating bundle..."
+      # install bundled gems if initial push
+      log "Installing bundle..."
       log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
       log "\n"
       log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
       raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
+    end
+    
+    def bundle_update
+      # update bundled gems if manifest file has changed
+      log "Updating bundle..."
+      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+      log "\n"
+      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle update`
+      raise "Bundle update failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
     end
 
     def install_application
@@ -208,7 +217,8 @@ module GitDeploy::Command
         end
 
 
-        bundle_install if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock') || @old_reference == NULL_REFERENCE
+        bundle_update if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock')
+        bundle_install if @old_reference == NULL_REFERENCE
 
         # update existing submodules
         system %(umask 002 && git submodule update)
