@@ -49,11 +49,19 @@ module GitDeploy::Command
     
     def bundle_update
       # update bundled gems if manifest file has changed
-      log "Updating bundle..."
-      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
-      log "\n"
-      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle update`
-      raise "Bundle update failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
+      # STRANGE a bundle update on the server results in some strange error...
+        # You have modified your Gemfile in development but did not check
+        # the resulting snapshot (Gemfile.lock) into version control
+        
+      # As such I'm removing the bundler cache and installing from scratch...
+      `rm -rf #{@app_dir}/vendor/bundle/`
+      bundle_install
+      
+      # log "Updating bundle..."
+      # log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+      # log "\n"
+      # log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle update`
+      # raise "Bundle update failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
     end
 
     def install_application
