@@ -105,6 +105,19 @@ module GitDeploy::Command
       STDOUT.puts message if where == :stdout # redundant to use all
       @log.info(message)  if where == :file || where == :all
     end
+    
+    def restart_god
+      if system %(which god)
+        log ""
+        log "---> Restarting God"
+        log ""+`service god restart`
+        log ""
+      else
+        log ""
+        log "!!!! God not installed but .job(s) changed!"
+        log ""
+      end
+    end
 
     def hook
       # display current versions
@@ -227,6 +240,8 @@ module GitDeploy::Command
 
         bundle_update if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock')
         bundle_install if @old_reference == NULL_REFERENCE
+        
+        restart_god if changed_files.grep(/.job/).size > 0
 
         # update existing submodules
         system %(umask 002 && git submodule update)
