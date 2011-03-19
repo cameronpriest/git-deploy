@@ -110,7 +110,8 @@ module GitDeploy::Command
       if system %(which god)
         log ""
         log "---> Restarting God"
-        log ""+`service god restart`
+        log `/etc/init.d/god restart`
+        log `service god restart`
         log ""
       else
         log ""
@@ -123,7 +124,7 @@ module GitDeploy::Command
       if system(%(which god)) && system(%(which resque))
         log ""
         log "---> Restarting Resque"
-        log ""+`god restart resque`
+        log `god restart resque`
         log ""
       else
         log ""
