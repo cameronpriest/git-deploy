@@ -109,9 +109,10 @@ module GitDeploy::Command
     def restart_god
       if system %(which god)
         log ""
-        log "---> Restarting God"
-        log `/etc/init.d/god restart`
-        log `service god restart`
+        log "---> Restart God"
+        log "login to the server and manually restart god with 'service restart god'"
+        # log `/etc/init.d/god restart`
+        # log `service god restart`
         log ""
       else
         log ""
