@@ -114,7 +114,20 @@ module GitDeploy::Command
         log ""
       else
         log ""
-        log "!!!! God not installed but .job(s) changed!"
+        log "!!!! God not installed but .god(s) changed!"
+        log ""
+      end
+    end
+    
+    def restart_resque_workers
+      if system(%(which god)) && system(%(which resque))
+        log ""
+        log "---> Restarting Resque"
+        log ""+`god restart resque`
+        log ""
+      else
+        log ""
+        log "!!!! God or Resque not installed but job(s) changed!"
         log ""
       end
     end
@@ -241,7 +254,9 @@ module GitDeploy::Command
         bundle_update if changed_files.include?('Gemfile') || changed_files.include?('Gemfile.lock')
         bundle_install if @old_reference == NULL_REFERENCE
         
-        restart_god if changed_files.grep(/.job/).size > 0
+        restart_god if changed_files.grep(/.god/).size > 0
+        
+        restart_resque_workers if changed_files.grep(/jobs\/.*\.rb/).size > 0
 
         # update existing submodules
         system %(umask 002 && git submodule update)
