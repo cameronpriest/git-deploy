@@ -107,31 +107,27 @@ module GitDeploy::Command
     end
     
     def restart_god
+      log ""
+      log "---> Restart God"
       if system %(which god)
-        log ""
-        log "---> Restart God"
         log "login to the server and manually restart god with 'service restart god'"
         # log `/etc/init.d/god restart`
         # log `service god restart`
-        log ""
       else
-        log ""
         log "!!!! God not installed but .god(s) changed!"
-        log ""
       end
+      log ""
     end
     
     def restart_resque_workers
+      log ""
+      log "---> Restarting Resque"
       if system(%(which god)) && system(%(which resque))
-        log ""
-        log "---> Restarting Resque"
         log `god restart resque`
-        log ""
       else
-        log ""
         log "!!!! God or Resque not installed but job(s) changed!"
-        log ""
       end
+      log ""
     end
 
     def hook
