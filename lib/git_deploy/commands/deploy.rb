@@ -17,119 +17,6 @@ end
 module GitDeploy::Command
   class Deploy < Base
     NULL_REFERENCE = '0' * 40
-    
-    def copy_configurations
-      # config = 'config/database.yml'
-      # 
-      # if @old_reference == NULL_REFERENCE
-      #   # this is the first push; this branch was just created
-      #   
-      #   unless File.exists?(config)
-      #     # install the database config from the example file
-      #     example = ['config/database.example.yml', config + '.example'].find { |f| File.exists? f }
-      #     FileUtils.cp example, config if example
-      #   end
-      # end
-    end
-
-    def restart_application
-      FileUtils.touch "#{@app_dir}/tmp/restart.txt"
-      log "", :stderr
-      log ":-)  restarting Passenger app"
-    end
-
-    def bundle_install
-      # install bundled gems if initial push
-      log "Installing bundle..."
-      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
-      log "\n"
-      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
-      raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
-    end
-    
-    def bundle_update
-      # update bundled gems if manifest file has changed
-      # STRANGE a bundle update on the server results in some strange error...
-        # You have modified your Gemfile in development but did not check
-        # the resulting snapshot (Gemfile.lock) into version control
-        
-      # As such I'm removing the bundler cache and installing from scratch...
-      `rm -rf #{@app_dir}/vendor/bundle/`
-      bundle_install
-      
-      # log "Updating bundle..."
-      # log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
-      # log "\n"
-      # log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle update`
-      # raise "Bundle update failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
-    end
-
-    def install_application
-      `umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
-    end
-
-    def set_references
-      if STDIN.gets
-        references = $_.split
-        head = references.pop
-        @old_reference, @new_reference = references if @head == head
-      end
-      raise "Git repository branch may not be equal to the pushed branch!" if @new_reference.nil? or @new_reference == NULL_REFERENCE
-    end
-    
-    def ensure_log_tmp
-      FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
-      system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
-    end
-
-    def parse_configuration(file)
-      config = {}
-      current = nil
-
-      File.open(file).each_line do |line|
-        case line
-        when /^\[(\w+)(?: "(.+)")\]/
-          key, subkey = $1, $2
-          current = (config[key] ||= {})
-          current = (current[subkey] ||= {}) if subkey
-        else
-          key, value = line.strip.split(' = ')
-          current[key] = value
-        end
-      end
-      config
-    end
-
-    def log(message,where = :all)
-      STDERR.puts message if where == :stderr || where == :all
-      STDOUT.puts message if where == :stdout # redundant to use all
-      @log.info(message)  if where == :file || where == :all
-    end
-    
-    def restart_god
-      log ""
-      log "---> Restart God"
-      if system %(which god)
-        log "login to the server and manually restart god with 'service restart god'"
-        # log `/etc/init.d/god restart`
-        # log `service god restart`
-      else
-        log "!!!! God not installed but .god(s) changed!"
-      end
-      log ""
-    end
-    
-    def restart_resque_workers
-      log ""
-      log "---> Restarting Resque"
-      if system(%(which god)) && system(%(which resque))
-        log `god restart resque`
-      else
-        log "!!!! God or Resque not installed but job(s) changed!"
-      end
-      log ""
-    end
-
     def hook
       # display current versions
       # First push?
@@ -284,5 +171,124 @@ module GitDeploy::Command
         exit 1
       end
     end
+    
+    def bundle
+      bundle_install
+    end
+    
+    private
+    
+    def copy_configurations
+      # config = 'config/database.yml'
+      # 
+      # if @old_reference == NULL_REFERENCE
+      #   # this is the first push; this branch was just created
+      #   
+      #   unless File.exists?(config)
+      #     # install the database config from the example file
+      #     example = ['config/database.example.yml', config + '.example'].find { |f| File.exists? f }
+      #     FileUtils.cp example, config if example
+      #   end
+      # end
+    end
+
+    def restart_application
+      FileUtils.touch "#{@app_dir}/tmp/restart.txt"
+      log "", :stderr
+      log ":-)  restarting Passenger app"
+    end
+
+    def bundle_install
+      # install bundled gems if initial push
+      log "Installing bundle..."
+      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+      log "\n"
+      log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle install --deployment --without development test`
+      raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
+    end
+    
+    def bundle_update
+      # update bundled gems if manifest file has changed
+      # STRANGE a bundle update on the server results in some strange error...
+        # You have modified your Gemfile in development but did not check
+        # the resulting snapshot (Gemfile.lock) into version control
+        
+      # As such I'm removing the bundler cache and installing from scratch...
+      `rm -rf #{@app_dir}/vendor/bundle/`
+      bundle_install
+      
+      # log "Updating bundle..."
+      # log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+      # log "\n"
+      # log `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle update`
+      # raise "Bundle update failed!" unless `umask 002 && cd #{@app_dir} && rvm 1.8.7@base exec bundle check --no-color`[/.*are satisfied.*/i]
+    end
+
+    def install_application
+      `umask 002 && git archive #{@new_reference} | tar -x -C #{@app_dir}`
+    end
+
+    def set_references
+      if STDIN.gets
+        references = $_.split
+        head = references.pop
+        @old_reference, @new_reference = references if @head == head
+      end
+      raise "Git repository branch may not be equal to the pushed branch!" if @new_reference.nil? or @new_reference == NULL_REFERENCE
+    end
+    
+    def ensure_log_tmp
+      FileUtils.mkdir_p(["#{@app_dir}/log","#{@app_dir}/tmp"])
+      system %(find #{@app_dir}* -name log -o -name tmp | xargs chmod -R 0777)
+    end
+
+    def parse_configuration(file)
+      config = {}
+      current = nil
+
+      File.open(file).each_line do |line|
+        case line
+        when /^\[(\w+)(?: "(.+)")\]/
+          key, subkey = $1, $2
+          current = (config[key] ||= {})
+          current = (current[subkey] ||= {}) if subkey
+        else
+          key, value = line.strip.split(' = ')
+          current[key] = value
+        end
+      end
+      config
+    end
+
+    def log(message,where = :all)
+      STDERR.puts message if where == :stderr || where == :all
+      STDOUT.puts message if where == :stdout # redundant to use all
+      @log.info(message)  if where == :file || where == :all
+    end
+    
+    def restart_god
+      log ""
+      log "---> Restart God"
+      if system %(which god)
+        log "login to the server and manually restart god with 'service restart god'"
+        # log `/etc/init.d/god restart`
+        # log `service god restart`
+      else
+        log "!!!! God not installed but .god(s) changed!"
+      end
+      log ""
+    end
+    
+    def restart_resque_workers
+      log ""
+      log "---> Restarting Resque"
+      if system(%(which god)) && system(%(which resque))
+        log `god restart resque`
+      else
+        log "!!!! God or Resque not installed but job(s) changed!"
+      end
+      log ""
+    end
+
   end
 end
