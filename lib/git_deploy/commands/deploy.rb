@@ -17,6 +17,11 @@ end
 module GitDeploy::Command
   class Deploy < Base
     NULL_REFERENCE = '0' * 40
+    
+    def initialize
+      puts "Deploy"
+    end
+    
     def hook
       # display current versions
       # First push?
@@ -173,6 +178,7 @@ module GitDeploy::Command
     end
     
     def bundle
+      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
       bundle_install
     end
     
