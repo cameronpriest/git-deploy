@@ -20,8 +20,8 @@ module GitDeploy::Command
     
     def initialize(args)
       puts "Deploy"
-      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
       super(args)
+      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
     end
     
     def hook
