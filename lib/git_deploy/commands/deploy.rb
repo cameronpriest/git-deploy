@@ -207,10 +207,10 @@ module GitDeploy::Command
     def bundle_install
       # install bundled gems if initial push
       log "Installing bundle..."
-      log `umask 002 && cd #{@app_dir} && ree@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+      log `umask 002 && cd #{@app_dir} && rvm ree@base exec bash -c 'echo Installing gems to $GEM_HOME'`
       log "\n"
-      log `umask 002 && cd #{@app_dir} && ree@base exec bundle install --deployment --without development test`
-      raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && ree@base exec bundle check --no-color`[/.*are satisfied.*/i]
+      log `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle install --deployment --without development test`
+      raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle check --no-color`[/.*are satisfied.*/i]
     end
     
     def bundle_update
@@ -224,10 +224,10 @@ module GitDeploy::Command
       bundle_install
       
       # log "Updating bundle..."
-      # log `umask 002 && cd #{@app_dir} && ree@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+      # log `umask 002 && cd #{@app_dir} && rvm ree@base exec bash -c 'echo Installing gems to $GEM_HOME'`
       # log "\n"
-      # log `umask 002 && cd #{@app_dir} && ree@base exec bundle update`
-      # raise "Bundle update failed!" unless `umask 002 && cd #{@app_dir} && ree@base exec bundle check --no-color`[/.*are satisfied.*/i]
+      # log `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle update`
+      # raise "Bundle update failed!" unless `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle check --no-color`[/.*are satisfied.*/i]
     end
 
     def install_application
