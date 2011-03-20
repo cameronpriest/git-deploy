@@ -25,6 +25,8 @@ module GitDeploy::Command
       puts "Step 8 of 8 Install Nginx with Passenger (Including status module)"
       puts `passenger-install-nginx-module --auto --prefix=/opt/nginx --nginx-source-dir="#{Dir.pwd}/nginx-0.8.54" --extra-configure-flags="--with-http_stub_status_module"`
       puts "Done!"
+      puts `rm -f nginx-0.8.54.tar.gz`
+      puts `rm -rf nginx-0.8.54`
     end
   end
 end
