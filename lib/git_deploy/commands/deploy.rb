@@ -18,8 +18,10 @@ module GitDeploy::Command
   class Deploy < Base
     NULL_REFERENCE = '0' * 40
     
-    def initialize
+    def initialize(args)
       puts "Deploy"
+      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
+      super(args)
     end
     
     def hook
@@ -45,7 +47,6 @@ module GitDeploy::Command
                 
         @restart = false
         @old_reference = @new_reference = nil
-        @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
         log ""
         log "---> Using #{GitDeploy::GEM_NAME} #{GitDeploy::VERSION}"
         log "---> Using #{`rvm-prompt i v p g`.chomp}"
@@ -178,7 +179,6 @@ module GitDeploy::Command
     end
     
     def bundle
-      @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
       bundle_install
     end
     
