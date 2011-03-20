@@ -8,10 +8,12 @@ module GitDeploy::Command
       puts ""
       puts "Step 1 of 8 Install RVM System Wide"
       puts system(`curl -L http://bit.ly/rvm-install-system-wide`) #unless system "which rvm"
+      puts `source ~/.bash_profile`
       puts "Step 2 of 8 Install Ruby Enterprise"
       puts `rvm install ree` #unless system "rvm use ree"
       puts "Step 3 of 8 Create base gemset"
       puts `rvm gemset create base`
+      puts `rvm use ree@base`
       puts "Step 4 of 8 Install Phusion Passenger"
       puts `gem install passenger` #unless system "which passenger"
       puts "Step 5 of 8 Install Bundler"
