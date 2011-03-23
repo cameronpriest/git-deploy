@@ -19,7 +19,6 @@ module GitDeploy::Command
     NULL_REFERENCE = '0' * 40
     
     def initialize(args)
-      puts "Deploy"
       super(args)
       @log ||= Logger.new("#{@app_dir}/log/deploy.log", 10, 1024000)
     end
@@ -205,12 +204,15 @@ module GitDeploy::Command
     end
 
     def bundle_install
-      # install bundled gems if initial push
-      log "Installing bundle..."
-      log `umask 002 && cd #{@app_dir} && rvm ree@base exec bash -c 'echo Installing gems to $GEM_HOME'`
-      log "\n"
-      log `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle install --deployment --without development test`
-      raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle check --no-color`[/.*are satisfied.*/i]
+      unless `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle check --no-color`[/.*are satisfied.*/i]
+        log "Installing bundle..."
+        log `umask 002 && cd #{@app_dir} && rvm ree@base exec bash -c 'echo Installing gems to $GEM_HOME'`
+        log "\n"
+        log `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle install --deployment --without development test`
+        raise "Bundle installation failed!" unless `umask 002 && cd #{@app_dir} && rvm ree@base exec bundle check --no-color`[/.*are satisfied.*/i]
+      else
+        log "Gemfile or Gemfile.lock changed but dependencies are still satisfied. No bundle installation necessary."
+      end
     end
     
     def bundle_update

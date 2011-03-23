@@ -1,6 +1,9 @@
 module GitDeploy::Command
   class Server < Base
     def setup
+      
+      # Enusre root user
+      
       puts ""
       puts "Setting up server, this may take a while..."
       puts ""
@@ -27,6 +30,15 @@ module GitDeploy::Command
       puts "Done!"
       puts `rm -f nginx-0.8.54.tar.gz`
       puts `rm -rf nginx-0.8.54`
+      
+      # Create application directories
+      # Update application hooks
+      # Add serverdensity
+      # Add git user
+      # Configure nginx
+      # Add init.d
+      # restart nginx
+      
     end
   end
 end
