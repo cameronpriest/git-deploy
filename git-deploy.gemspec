@@ -3,7 +3,7 @@ Gem::Specification.new do |gem|
   gem.version = '0.4.2'
   gem.date    = Date.today.to_s
   
-  gem.add_dependency 'capistrano', '~> 2.5.9'
+  gem.add_dependency 'capistrano', '~> 2.6.0'
   
   gem.summary = "Simple git push-based application deployment"
   gem.description = "A tool to install useful git hooks on your remote repository to enable push-based, Heroku-like deployment on your host."
